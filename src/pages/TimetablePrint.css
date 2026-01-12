@@ -1,0 +1,177 @@
+/* src/pages/TimetablePrint.css */
+@media print {
+    @page {
+        size: landscape;
+        margin: 1cm;
+    }
+}
+
+.print-container {
+    background-color: white;
+    color: black;
+    font-family: "Times New Roman", Times, serif;
+    padding: 2.5rem;
+    /* Increased padding for better whitespace */
+    max-width: 1200px;
+    /* Wider to accommodate the landscape layout */
+    margin: 0 auto;
+    border-top: 2px solid black;
+}
+
+.print-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.college-name {
+    font-size: 1.25rem;
+    /* Matches image scale */
+    font-weight: 900;
+    /* Extra bold */
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.5px;
+}
+
+.sub-header {
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.title-header {
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin: 1.5rem 0;
+    letter-spacing: 0.5px;
+}
+
+.meta-info-grid {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid black;
+    /* Bottom line of header section */
+    padding-bottom: 0.5rem;
+}
+
+/* Timetable Grid */
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    border: 1px solid black;
+    /* Outer border */
+}
+
+.print-table th,
+.print-table td {
+    border: 1px solid black;
+    padding: 0;
+    /* Remove default padding for strict control */
+    text-align: center;
+    font-size: 0.85rem;
+    vertical-align: middle;
+    height: 3.5rem;
+    /* Fixed height for consistency */
+}
+
+.print-table th {
+    background-color: #f3f4f6;
+    /* Very light gray for headers */
+    font-weight: 700;
+    padding: 0.5rem;
+    height: auto;
+}
+
+.day-col {
+    font-weight: 800;
+    width: 80px;
+}
+
+/* Vertical Text Columns */
+.break-col {
+    width: 40px;
+    background-color: #e5e7eb;
+    /* Light gray for break */
+    padding: 0 !important;
+}
+
+.vertical-text-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
+.vertical-text {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    color: #374151;
+}
+
+.split-cell-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.split-cell {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid black;
+    width: 100%;
+}
+
+.split-cell:last-child {
+    border-bottom: none;
+}
+
+/* Allocation Table */
+.allocation-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.allocation-table th,
+.allocation-table td {
+    border: 1px solid black;
+    padding: 6px 10px;
+    text-align: left;
+}
+
+.allocation-table th {
+    background-color: white;
+    /* Image header is white */
+    font-weight: 700;
+}
+
+.signatures-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4rem;
+    padding: 0 4rem;
+}
+
+.signature-line {
+    border-top: 1px solid black;
+    width: 150px;
+    text-align: center;
+    padding-top: 0.5rem;
+    font-weight: 800;
+    font-size: 0.9rem;
+}
