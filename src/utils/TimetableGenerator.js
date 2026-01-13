@@ -1,360 +1,395 @@
-/**
- * Timetable Generation Logic
- * Validates constraints and generates a schedule for a single class.
- */
+export const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const SLOTS = 7;
+const isLab = (subject) => {
+    if (subject.type === 'Lab') return true;
+    const code = subject.code.toUpperCase();
+    const name = subject.name.toUpperCase();
+    return code.includes('LAB') || name.includes('LABORATORY') || name.includes('PRACTICAL');
+};
+const isElective = (subject) => {
+    if (subject.type === 'Elective') return true;
+    return /-\s*(I|II|III|IV)\s*\*?\s*$/i.test(subject.name) || subject.name.toUpperCase().includes('ELECTIVE');
+};
+const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+};
+export const generateClassTimetable = (semester, section, subjects, reservedSlots = {}) => {
+    let grid = Array(DAYS.length).fill(null).map(() => Array(SLOTS).fill(null));
 
-export const generateClassTimetable = (
-    classId,       // e.g., "Year 1 - Section A"
-    assignments,   // List of { subject, teacher, periodsPerWeek, type }
-    masterSchedule // Current global schedule object to check for clashes
-) => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const times = [
-        '08:45 - 09:40', '09:40 - 10:35', '10:55 - 11:45',
-        '11:45 - 12:35', '13:45 - 14:35', '14:35 - 15:25', '15:25 - 16:15'
-    ];
+    // 1. Separation
+    // We strictly identify Labs vs Electives vs Regular Theory
+    let labs = [];
+    let electives = {};
+    let theory = [];
 
-    // 0. Safety: If no assignments, return empty immediately
-    if (!assignments || assignments.length === 0) return { schedule: {}, errors: ["No assignments provided."] };
-
-    const newClassSchedule = {};
-    const log = []; // For debug output
-
-    // 1. Expand Requirements into a Pool of Slots
-    let slotPool = [];
-    const theoryCodes = new Set(
-        assignments.filter(a => a.type !== 'Lab').map(a => a.subject.code.toUpperCase())
-    );
-    const addedLabs = new Set();
-
-    assignments.forEach(assign => {
-        const isLab = assign.type === 'Lab';
-        const subCode = (assign.subject.code || '').toUpperCase();
-        const subName = (assign.subject.name || '').toLowerCase().replace(/\s+/g, '');
-
-        if (isLab) {
-            // CONSTRAINT: One subject should have one lab for a week.
-            // We use subject name for more robust de-duplication.
-            if (addedLabs.has(subName)) return;
-            addedLabs.add(subName);
-
-            // Integrated Lab: Matching code OR "IL" in name/code = 2 periods; Regular Lab = 3 periods
-            const isIL = subCode.includes('IL') || subName.includes('il');
-            const isCodeMatch = Array.from(theoryCodes).some(tc => tc === subCode);
-            const isIntegrated = isIL || isCodeMatch;
-            const duration = isIntegrated ? 2 : 3;
-
-            slotPool.push({
-                ...assign,
-                poolId: `${subCode}-0`,
-                isLab: true,
-                duration: duration,
-                isIntegrated
-            });
+    subjects.forEach(sub => {
+        // Adjust credit logic: If explicit credit is 0, keep it 0.
+        // If undefined/null, default to heuristic.
+        let credit = sub.credit;
+        if (credit === undefined || credit === null || credit === '') {
+            credit = (sub.code.includes('L') ? 3 : 1);
         } else {
-            // Theory assignments - expand into multiple single periods
-            const rawCredits = String(assign.subject.credits || '0');
-            const credits = isNaN(parseInt(rawCredits)) ? 0 : parseInt(rawCredits);
-            const sessionCount = Math.min(5, (credits > 0 ? (credits + 1) : 3));
+            credit = parseInt(credit);
+            if (isNaN(credit)) credit = 1;
+        }
 
-            for (let i = 0; i < sessionCount; i++) {
-                const isZeroCredit = credits === 0;
-                // NEW RULE: 0 credit subject should have 1 period on Saturday
-                const shouldForceSaturday = isZeroCredit && i === 0;
+        if (isLab(sub)) {
+            // Handle multiple sessions
+            const sessions = sub.sessions || 1;
+            const duration = Math.floor(credit / sessions) || 3; // Default 3 if calc fails
 
-                slotPool.push({
-                    ...assign,
-                    poolId: `${assign.subject.code}-${i}`,
-                    isLab: false,
-                    duration: 1,
-                    forceDay: shouldForceSaturday ? 'Saturday' : undefined,
-                    isZeroCredit: isZeroCredit
-                });
+            for (let i = 0; i < sessions; i++) {
+                labs.push({ ...sub, credit: duration });
             }
+        } else if (isElective(sub)) {
+            // Group Key: Use the Roman Numeral part specifically to group them together.
+            // Support all dash types: hyphen, en-dash, em-dash
+            const romanMatch = sub.name.match(/ (I|II|III|IV)\s*\*?\s*$/i) || sub.name.match(/[-–—]\s*(I|II|III|IV)\s*\*?\s*$/i);
+
+            let groupKey = 'Elective-General';
+            if (romanMatch) {
+                const romanNum = romanMatch[1].toUpperCase();
+                const hasStar = sub.name.includes('*') ? '*' : '';
+                groupKey = `Elective - ${romanNum}${hasStar}`;
+            } else if (sub.name.toUpperCase().includes('ELECTIVE')) {
+                groupKey = 'Elective-General';
+            }
+
+            if (!electives[groupKey]) electives[groupKey] = [];
+            electives[groupKey].push(sub);
+        } else {
+            theory.push({ ...sub, credit: credit }); // Use the parsed credit
         }
     });
 
-    // Special Requirement: Mandatory 1 period of an "Editable Subject" on Saturday
-    slotPool.push({
-        subject: { code: 'EDITABLE', name: 'Editable Subject' },
-        teacher: { id: 'special', name: 'Staff' },
-        isLab: false,
-        duration: 1,
-        forceDay: 'Saturday'
-    });
+    // 2. Schedule Labs (The "Big Rocks" first)
+    // Rule: Randomly or Sequentially pick a day, but prefer Afternoon (Slot 4,5,6) or Morning (0,1,2).
+    // Labs cannot overlap.
 
-    // 2. Sort Pool: Labs (Hardest to fit) FIRST, then Forced Slots, then others
-    slotPool.sort((a, b) => {
-        // High Priority: Labs (3 periods) must be placed while the schedule is empty
-        if (a.isLab && !b.isLab) return -1;
-        if (!a.isLab && b.isLab) return 1;
+    // Shuffle Labs relative to Section ID (char code) to ensure A, B, C start differently
+    // Or just pure random shuffle
+    labs.sort(() => Math.random() - 0.5);
 
-        // Next: Forced days (Saturday specials)
-        if (a.forceDay && !b.forceDay) return -1;
-        if (!a.forceDay && b.forceDay) return 1;
-
-        return b.duration - a.duration;
-    });
-
-    // Helper: Check Teacher Availability
-    const isTeacherFree = (teacherId, day, time) => {
-        if (!teacherId || teacherId === 'simulate') return true;
-
-        // Exact match for Day and Time suffix to prevent staff clashes
-        const targetSuffix = `-${day}-${time}`;
-
-        return !Object.entries(masterSchedule).some(([key, entry]) => {
-            return key.endsWith(targetSuffix) && entry.teacherId === teacherId;
-        });
-    };
-
-    // Helper: Check Class Availability
-    const isSlotFree = (day, timeIdx, duration) => {
-        for (let k = 0; k < duration; k++) {
-            if (timeIdx + k >= times.length) return false; // Out of bounds
-            const timeKey = times[timeIdx + k];
-            const key = `Sem${classId.split(' ')[1]}-S${classId.split(' ').pop().replace('Section ', '')}-${day}-${timeKey}`;
-            // Actually, we are building `newClassSchedule` locally first.
-            if (newClassSchedule[`${day}-${timeKey}`]) return false;
-        }
-        return true;
-    };
-
-    // 3. Allocation Loop
-    // Tracking usage to spread subjects evenly
-    const subjectDayUsage = {}; // subjectCode -> day -> count
-    const subjectSessionUsage = {}; // subjectCode -> day -> { FN: bool, AN: bool }
-    const subjectTimeFreq = {}; // subjectCode -> timeIdx -> count (to prevent same pattern)
-
-    // Tracking Global Lab constraints
-    const totalLabsOnDay = {}; // day -> count
-    const labStartTimes = {}; // tIdx -> count
-    const usedStartTimes = {}; // tIdx -> boolean (to prevent same flow)
-
-    // Create a matrix of Day x Time
-    const matrix = {};
-    days.forEach(d => {
-        times.forEach(t => { matrix[`${d}-${t}`] = null; });
-    });
-
-    // Attempt to place slots
-    for (const slot of slotPool) {
-        let placed = false;
-        const subCode = slot.subject.code;
-
-        if (!subjectDayUsage[subCode]) subjectDayUsage[subCode] = {};
-        if (!subjectSessionUsage[subCode]) subjectSessionUsage[subCode] = {};
-        if (!subjectTimeFreq[subCode]) subjectTimeFreq[subCode] = {};
-
-        // Heuristic: Prefer days with fewer sessions for this subject
-        let dayIndices = [0, 1, 2, 3, 4, 5].sort((a, b) => {
-            const usageA = subjectDayUsage[subCode][days[a]] || 0;
-            const usageB = subjectDayUsage[subCode][days[b]] || 0;
-            if (usageA !== usageB) return usageA - usageB;
-
-            // If it's a lab, prioritize days that HAVE NO LABS YET
-            if (slot.isLab) {
-                const labA = totalLabsOnDay[days[a]] || 0;
-                const labB = totalLabsOnDay[days[b]] || 0;
-                if (labA !== labB) return labA - labB;
-            }
-
-            return Math.random() - 0.5; // Randomize same-level days
-        });
-
-        // If forceDay is specified (e.g., Saturday), only try that day
-        if (slot.forceDay) {
-            const forcedIdx = days.indexOf(slot.forceDay);
-            if (forcedIdx !== -1) dayIndices = [forcedIdx];
-        }
-
-        for (const dIdx of dayIndices) {
-            if (placed) break;
-            const day = days[dIdx];
-
-            // CONSTRAINT: Only one lab per day
-            if (slot.isLab && (totalLabsOnDay[day] || 0) > 0) continue;
-
-            if (slot.isLab && day === 'Saturday') continue;
-            if (!subjectSessionUsage[subCode][day]) subjectSessionUsage[subCode][day] = { FN: false, AN: false };
-
-            // Determine preference: If we already have FN, try AN first, and vice-versa
-            // Also prioritize time indices where this subject HAS NOT been placed yet
-            let timeIndices = [0, 1, 2, 3, 4, 5, 6].sort((a, b) => {
-                // Prioritize different starting positions for variety
-                const freqA = subjectTimeFreq[subCode][a] || 0;
-                const freqB = subjectTimeFreq[subCode][b] || 0;
-                if (freqA !== freqB) return freqA - freqB;
-
-                // If it's a lab, avoid starting at the same flow/index as other labs
-                if (slot.isLab) {
-                    const startA = labStartTimes[a] || 0;
-                    const startB = labStartTimes[b] || 0;
-                    if (startA !== startB) return startA - startB;
-                }
-
-                return Math.random() - 0.5;
-            });
-
-            const hasFN = subjectSessionUsage[subCode][day].FN;
-            const hasAN = subjectSessionUsage[subCode][day].AN;
-
-            // Re-sort based on FN/AN preference if applicable
-            if (hasFN && !hasAN) {
-                timeIndices = [...timeIndices.filter(i => i >= 4), ...timeIndices.filter(i => i < 4)];
-            } else if (!hasFN && hasAN) {
-                timeIndices = [...timeIndices.filter(i => i < 4), ...timeIndices.filter(i => i >= 4)];
-            }
-
-            for (const tIdx of timeIndices) {
-                if (tIdx > times.length - slot.duration) continue;
-
-                // NEW CONSTRAINT: Editable or 0-credit subject should not come at 1st period (index 0)
-                if ((subCode === 'EDITABLE' || slot.isZeroCredit) && tIdx === 0) continue;
-
-                // NEW CONSTRAINT: Lab periods should not start at 4th period (index 3)
-                if (slot.isLab && tIdx === 3) continue;
-
-                // NEW CONSTRAINT: Prevent "Same Flow" - if a lab already starts at this index on another day, try another
-                if (slot.isLab && (labStartTimes[tIdx] || 0) > 0 && Math.random() > 0.3) {
-                    // We allow some overlap if strictly necessary, but prefer unique start times
-                    continue;
-                }
-
-                const time = times[tIdx];
-
-                // 1. Valid Slot?
-                let collides = false;
-                for (let k = 0; k < slot.duration; k++) {
-                    if (matrix[`${day}-${times[tIdx + k]}`]) collides = true;
-                    // LUNCH BREAK CONSTRAINT: Session cannot cross from period 4 (idx 3) to period 5 (idx 4)
-                    if (tIdx < 4 && (tIdx + k) >= 4) collides = true;
-
-                    // NEW GLOBAL LAB CONSTRAINT: Allow parallel labs (multple rooms) 
-                    // Limit to 3 labs at the same time across all sections to prevent room shortages
-                    if (slot.isLab) {
-                        const targetSuffix = `-${day}-${times[tIdx + k]}`;
-                        const concurrentLabs = Object.entries(masterSchedule).filter(([key, entry]) => {
-                            return key.endsWith(targetSuffix) && entry.type === 'Lab';
-                        }).length;
-
-                        if (concurrentLabs >= 3) collides = true;
-                    }
-                }
-                if (collides) continue;
-
-                // NEW STRICT CONSTRAINT: No duplicate subjects on the same day (excluding Labs)
-                const alreadyOnDay = (subjectDayUsage[subCode][day] || 0) > 0;
-                if (!slot.isLab && alreadyOnDay) {
-                    continue;
-                }
-
-                // NEW STRICT CONSTRAINT: Staggering (Same subject cannot be in the same slot on different days)
-                const alreadyAtThisTime = (subjectTimeFreq[subCode][tIdx] || 0) > 0;
-                if (!slot.isLab && alreadyAtThisTime) {
-                    continue;
-                }
-
-                // 2. Teacher Available?
-                let teacherClash = false;
-                if (slot.teacher?.id !== 'special') {
-                    for (let k = 0; k < slot.duration; k++) {
-                        if (!isTeacherFree(slot.teacher?.id, day, times[tIdx + k])) teacherClash = true;
-                    }
-                }
-                if (teacherClash) continue;
-
-                // 3. Place it
-                for (let k = 0; k < slot.duration; k++) {
-                    const exactTime = times[tIdx + k];
-                    matrix[`${day}-${exactTime}`] = slot;
-
-                    // Update tracking
-                    subjectDayUsage[subCode][day] = (subjectDayUsage[subCode][day] || 0) + 1;
-                    subjectTimeFreq[subCode][tIdx + k] = (subjectTimeFreq[subCode][tIdx + k] || 0) + 1;
-                    if (tIdx + k < 4) subjectSessionUsage[subCode][day].FN = true;
-                    else subjectSessionUsage[subCode][day].AN = true;
-
-                    if (slot.isLab) {
-                        totalLabsOnDay[day] = (totalLabsOnDay[day] || 0) + 1;
-                        if (k === 0) labStartTimes[tIdx] = (labStartTimes[tIdx] || 0) + 1;
-                    }
-                }
-                placed = true;
-                break;
-            }
-        }
-
-        if (!placed) {
-            log.push(`Could not place ${slot.subject.code} (${slot.type}). Constraints too tight.`);
-        }
+    // Also offset the starting day based on section to maximize spread
+    // A=0, B=1, ...
+    let dayOffset = 0;
+    if (section && section.length === 1) {
+        dayOffset = section.charCodeAt(0) % 5;
     }
 
-    // Convert local matrix to Global Schedule Key format
-    // Expected Key: Sem<Semester>-S<Sec>-<Day>-<Time>
-    // classId format: "Sem II - Section A"
-    const [semPart, sPart] = classId.split(' - ');
-    const sem = semPart.replace('Sem ', '');
-    const section = sPart.replace('Section ', '');
+    let occupiedDays = new Set();
+    let usedStartSlots = {}; // Track how many labs start at a given slot (0, 4, etc.) to balance Morning/Afternoon
 
-    const finalSchedule = {};
-    Object.keys(matrix).forEach(k => {
-        const [day, time] = k.split(/-(.+)/); // Split only on first hyphen
-        const val = matrix[k];
-        if (val) {
-            const key = `Sem${sem}-S${section}-${day}-${time}`;
-            finalSchedule[key] = {
-                subject: `${val.subject.code} - ${val.subject.name}`,
-                code: val.subject.code,
-                name: val.subject.name,
-                type: val.type,
-                teacherName: val.teacher.name,
-                teacherId: val.teacher.id,
-                room: (val.teacher.room || val.subject.room || "")
-            };
+    labs.forEach((lab, idx) => {
+        const duration = lab.credit; // e.g., 3
+        // Find a day with a free block of 'duration'
+        let placed = false;
+
+        // Check for Specific Slot Constraints
+        let allowedStartSlots = [];
+
+        // "if 3 period then 1st or 5th" -> Index 0 or 4
+        // "if 4 period then start only at 4 period" -> Index 3 (since index 3 is 4th period 12:00-1:00?)
+        // Let's interpret "Period X" as 1-based.
+        // Period 1 = Index 0. Period 5 = Index 4.
+        // Period 4 = Index 3. 
+
+        if (duration === 3) {
+            allowedStartSlots = [0, 4]; // Morning (1st) or Afternoon (5th)
+        } else if (duration === 4) {
+            allowedStartSlots = [3]; // Period 4
+        } else if (duration === 2) {
+            // Constraint: Should not start at Period 2 (Index 1) or Period 4 (Index 3)
+            // Allowed: Period 1 (0), Period 3 (2), Period 5 (4), Period 6 (5)
+            allowedStartSlots = [0, 2, 4, 5];
+        } else {
+            // Default: any slot that fits
+            for (let k = 0; k <= 7 - duration; k++) allowedStartSlots.push(k);
         }
-    });
 
-    return { schedule: finalSchedule, errors: log };
-};
+        // Sort allowedStartSlots by usage count ASC (Prefer unused start times)
+        // This answers: "if a lab start at the 1 period then the other lab should not start that 1 period"
+        allowedStartSlots.sort((a, b) => (usedStartSlots[a] || 0) - (usedStartSlots[b] || 0));
 
-export const findSubstitute = (
-    absentTeacherId,
-    date,
-    period,
-    dayName, // "Monday"
-    masterSchedule,
-    teachers,
-    subjects
-) => {
-    // 1. Identify Subject of the absent class
-    // We need the class context. But usually substitutes are found BY slot.
-    // ...
-    // Simplified: Return list of available teachers who match the department or subject
+        // Pass 1: Strict Resource Check (Don't overlap with other sections)
+        // CHANGE: Loop Slots FIRST, then Days. This ensures we prioritize the "Time of Day" variety check 
+        // across the whole week, rather than taking the first valid slot on Monday.
 
-    // Filter teachers who are FREE at this time
-    const time = period; // "08:45 - 09:40"
+        let days = [0, 1, 2, 3, 4];
+        // Rotate days by offset just to keep section variance
+        days = [...days.slice(dayOffset), ...days.slice(0, dayOffset)];
 
-    const available = teachers.filter(t => {
-        if (t.id === absentTeacherId) return false;
+        for (let startSlot of allowedStartSlots) {
+            for (let d of days) {
+                if (occupiedDays.has(d)) continue;
 
-        // Check availability
-        for (const key in masterSchedule) {
-            if (key.includes(`${dayName}-${time}`) && masterSchedule[key].teacherId === t.id) {
-                return false; // Busy
+                // Check Global Resource Constraint
+                let resourceConflict = false;
+                for (let k = 0; k < duration; k++) {
+                    const key = `${d}-${startSlot + k}`;
+                    if (reservedSlots[key] && reservedSlots[key].has(lab.code)) {
+                        resourceConflict = true;
+                        break;
+                    }
+                }
+                if (resourceConflict) continue;
+
+                if (isFree(grid[d], startSlot, duration)) {
+                    placeBlock(grid[d], startSlot, duration, lab, 'LAB');
+                    occupiedDays.add(d);
+                    usedStartSlots[startSlot] = (usedStartSlots[startSlot] || 0) + 1;
+                    placed = true;
+                    break;
+                }
+            }
+            if (placed) break;
+        }
+
+        // Pass 2: Fallback (Allow Resource Overlap if necessary)
+        // User said: "let any one of the lab can be repeat the same format but at the different day"
+        // Interpretation: If we can't find a unique slot, just find ANY valid slot where the lab is free in THIS grid.
+        if (!placed) {
+            for (let d of days) {
+                if (occupiedDays.has(d)) continue;
+
+                for (let startSlot of allowedStartSlots) {
+                    if (isFree(grid[d], startSlot, duration)) {
+                        // We do NOT check reservedSlots here. We allow collision.
+                        placeBlock(grid[d], startSlot, duration, lab, 'LAB');
+                        occupiedDays.add(d);
+                        usedStartSlots[startSlot] = (usedStartSlots[startSlot] || 0) + 1;
+                        placed = true;
+                        break;
+                    }
+                }
+                if (placed) break;
             }
         }
-        return true;
     });
 
-    // Score them:
-    // 1. Same Department (High Priority)
-    // 2. Same Subject Skill (Best)
-    // 3. Workload (Less is better)
+    // 3. Process Elective Groups into Theory/Saturday Units
+    const electiveGroups = Object.keys(electives);
+    electiveGroups.forEach(groupName => {
+        const subs = electives[groupName];
+        // For electives, we take the hours (credit/satCount) from the first subject in the group
+        // assuming all subjects in the same elective group share the same load.
+        const firstSub = subs[0];
+        const credit = firstSub.credit || 1;
+        const satCount = parseInt(firstSub.satCount) || 0;
 
-    // (Mock ranking for now)
-    return available.map(t => ({
-        ...t,
-        matchScore: 10 // Placeholder
-    }));
+        const virtualSubject = {
+            type: 'ELECTIVE_GROUP',
+            code: 'ELE',
+            name: groupName,
+            credit: credit,
+            satCount: satCount,
+            alternatives: subs.map(x => ({ code: x.code, name: x.name, teacher: x.teacherName }))
+        };
+
+        // Add to the main distribution pools
+        theory.push(virtualSubject);
+    });
+
+    // 4. Schedule Theory
+    // Distribute evenly.
+    // Flatten theories into a list of units (if credit > 1, add multiple times)
+    let theoryUnits = []; // Regular Mon-Fri units
+    let saturdayUnits = []; // Specific Saturday units
+
+    theory.forEach(t => {
+        // Use the credit directly as we already parsed it in step 1.
+        // If it's 0, it should be 0.
+        let totalHours = t.credit;
+        let satHours = parseInt(t.satCount) || 0;
+
+        // 1. Assign to Saturday
+        for (let i = 0; i < satHours; i++) {
+            saturdayUnits.push(t);
+        }
+
+        // 2. Remaining to Weekdays (Mon-Fri)
+        // Change: Treat 'credit' as Weekday Hours purely, so Saturday is additional.
+        // This solves the issue where subtracting satHours leaves holes in the week.
+        let weekdayHours = totalHours;
+
+        // If the user INTENDED Credit to be Total, this might overbook.
+        // But since they complain of empty space, we assume Overbook is preferred/correct.
+        if (weekdayHours < 0) weekdayHours = 0;
+
+        for (let i = 0; i < weekdayHours; i++) theoryUnits.push(t);
+    });
+
+    // Shuffle Theory Units to ensure different placement order for different sections
+    // This prevents "Same Subject Same Period" patterns across sections
+    theoryUnits.sort(() => Math.random() - 0.5);
+    saturdayUnits.sort(() => Math.random() - 0.5);
+
+    // 5. Fill Saturday First (Constraint)
+    // Saturday is day index 5.
+    let satSlot = 0;
+    saturdayUnits.forEach(unit => {
+        if (satSlot < SLOTS) {
+            if (unit.type === 'ELECTIVE_GROUP') {
+                grid[5][satSlot] = { ...unit };
+            } else {
+                grid[5][satSlot] = {
+                    type: 'REGULAR',
+                    code: unit.code,
+                    name: unit.name,
+                    teacher: unit.teacherName
+                };
+            }
+            satSlot++;
+        }
+    });
+    const subjectsToPlace = {};
+    theoryUnits.forEach(unit => {
+        if (!subjectsToPlace[unit.code]) subjectsToPlace[unit.code] = [];
+        subjectsToPlace[unit.code].push(unit);
+    });
+
+    // Step 2: Sort subjects by count DESC (Constrained subjects first)
+    const sortedCodes = Object.keys(subjectsToPlace).sort((a, b) =>
+        subjectsToPlace[b].length - subjectsToPlace[a].length
+    );
+
+    // Step 3: Helper to check code on a day (including potential alternatives)
+    const hasSubjectOnDay = (d, identifier) => {
+        for (let s = 0; s < SLOTS; s++) {
+            const slot = grid[d][s];
+            if (!slot) continue;
+
+            // If it's a regular subject or lab
+            if (slot.code === identifier) return true;
+
+            // If it's an elective group, check if the group name matches (the identifier for electives is the group name)
+            if (slot.type === 'ELECTIVE_GROUP' && slot.name === identifier) return true;
+        }
+        return false;
+    };
+
+    const allSlots = [0, 1, 2, 3, 4, 5, 6];
+
+    sortedCodes.forEach(code => {
+        const units = subjectsToPlace[code];
+        const usedPeriods = new Set();
+
+        units.forEach(unit => {
+            let placed = false;
+
+            // Strategy 1: Unique Day AND Unique Period (Spread vertically and horizontally)
+            let shuffledSlots = [...allSlots].sort(() => Math.random() - 0.5);
+            for (let s of shuffledSlots) {
+                if (usedPeriods.has(s)) continue;
+
+                let daysArr = [0, 1, 2, 3, 4];
+                daysArr.sort(() => Math.random() - 0.5);
+
+                for (let d of daysArr) {
+                    if (!hasSubjectOnDay(d, unit.code === 'ELE' ? unit.name : unit.code)) {
+                        if (grid[d][s] === null) {
+                            if (unit.type === 'ELECTIVE_GROUP') {
+                                grid[d][s] = { ...unit };
+                            } else {
+                                grid[d][s] = { type: 'REGULAR', code: unit.code, name: unit.name, teacher: unit.teacherName };
+                            }
+                            usedPeriods.add(s);
+                            placed = true;
+                            break;
+                        }
+                    }
+                }
+                if (placed) break;
+            }
+
+            // Strategy 2: Unique Day only (Vertical repetition allowed if variety pass fails)
+            if (!placed) {
+                for (let s = 0; s < SLOTS; s++) {
+                    let daysArr = [0, 1, 2, 3, 4];
+                    daysArr.sort(() => Math.random() - 0.5);
+
+                    for (let d of daysArr) {
+                        if (!hasSubjectOnDay(d, unit.code === 'ELE' ? unit.name : unit.code)) {
+                            if (grid[d][s] === null) {
+                                if (unit.type === 'ELECTIVE_GROUP') {
+                                    grid[d][s] = { ...unit };
+                                } else {
+                                    grid[d][s] = { type: 'REGULAR', code: unit.code, name: unit.name, teacher: unit.teacherName };
+                                }
+                                placed = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (placed) break;
+                }
+            }
+
+            // Strategy 3: Try to avoid same day, but allow if absolutely necessary to prevent blank spaces
+            if (!placed) {
+                let shuffledSlots = [...allSlots].sort(() => Math.random() - 0.5);
+                let daysArr = [0, 1, 2, 3, 4];
+                daysArr.sort(() => Math.random() - 0.5);
+
+                // Pass A: Try to find a slot on a day where the subject IS NOT yet present
+                for (let s of shuffledSlots) {
+                    for (let d of daysArr) {
+                        if (grid[d][s] === null && !hasSubjectOnDay(d, unit.code === 'ELE' ? unit.name : unit.code)) {
+                            if (unit.type === 'ELECTIVE_GROUP') {
+                                grid[d][s] = { ...unit };
+                            } else {
+                                grid[d][s] = { type: 'REGULAR', code: unit.code, name: unit.name, teacher: unit.teacherName };
+                            }
+                            placed = true;
+                            break;
+                        }
+                    }
+                    if (placed) break;
+                }
+
+                // Pass B: IF STILL NOT PLACED (Total Fallback), allow repetition on same day
+                if (!placed) {
+                    for (let s of shuffledSlots) {
+                        for (let d of daysArr) {
+                            if (grid[d][s] === null) {
+                                if (unit.type === 'ELECTIVE_GROUP') {
+                                    grid[d][s] = { ...unit };
+                                } else {
+                                    grid[d][s] = { type: 'REGULAR', code: unit.code, name: unit.name, teacher: unit.teacherName };
+                                }
+                                placed = true;
+                                break;
+                            }
+                        }
+                        if (placed) break;
+                    }
+                }
+            }
+        });
+    });
+
+    return grid;
 };
+
+function isFree(dayRow, startSlot, duration) {
+    if (startSlot + duration > 7) return false;
+    for (let i = 0; i < duration; i++) {
+        if (dayRow[startSlot + i] !== null) return false;
+    }
+    return true;
+}
+
+function placeBlock(dayRow, startSlot, duration, subject, type) {
+    for (let i = 0; i < duration; i++) {
+        dayRow[startSlot + i] = {
+            type: type, // 'LAB' or 'REGULAR'
+            code: subject.code,
+            name: subject.name,
+            teacher: subject.teacherName
+        };
+    }
+}

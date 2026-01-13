@@ -1,45 +1,37 @@
 import React from 'react';
-import { LayoutDashboard, Calendar, Users, BookOpen, GraduationCap, Building2, Settings, Columns } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
-import './Sidebar.css';
-
-const Sidebar = ({ isOpen, onClose }) => {
+import { NavLink, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Calendar, Users, BookOpen, Layers } from 'lucide-react';
+import './Layout.css';
+const Sidebar = () => {
+    const location = useLocation();
     const navItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-        { icon: Calendar, label: 'Timetable', path: '/timetable' },
-        { icon: Columns, label: 'Allocations', path: '/allocations' },
-        { icon: Users, label: 'Teachers', path: '/teachers' },
-        { icon: BookOpen, label: 'Subjects', path: '/subjects' },
+        { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { path: '/timetable', icon: Calendar, label: 'Timetable' },
+        { path: '/allocations', icon: Layers, label: 'Allocations' },
+        { path: '/teachers', icon: Users, label: 'Teachers' },
+        { path: '/subjects', icon: BookOpen, label: 'Subjects' },
     ];
-
     return (
-        <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-            <div className="logo-container">
-                <div className="logo-icon">PT</div>
-                <h1 className="logo-text">PSNA TIMETABLE</h1>
+        <aside className="app-sidebar">
+            <div className="sidebar-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <img src="/logo.png" alt="PSNA Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+                    <span style={{ fontWeight: 800, fontSize: '1.4rem', letterSpacing: '1px' }}>PSNA</span>
+                </div>
             </div>
-
-            <nav className="nav-menu">
+            <nav className="sidebar-nav">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                     >
                         <item.icon size={20} />
                         <span>{item.label}</span>
                     </NavLink>
                 ))}
             </nav>
-
-            <div className="sidebar-footer">
-                <button className="nav-item">
-                    <Settings size={20} />
-                    <span>Settings</span>
-                </button>
-            </div>
         </aside>
     );
 };
-
 export default Sidebar;

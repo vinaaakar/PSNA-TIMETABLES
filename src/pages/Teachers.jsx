@@ -1,256 +1,131 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
-import Modal from '../components/Modal';
 import { useData } from '../context/DataContext';
-import DataImporter from '../components/DataImporter';
-
+import { Search, Filter, Plus, Trash2, Save } from 'lucide-react';
+import Modal from '../components/Modal';
 const Teachers = () => {
-    const { teachers, subjects, addTeacher, updateTeacher, deleteTeacher, clearTeachers } = useData();
-
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentTeacher, setCurrentTeacher] = useState({
-        id: null,
-        name: '',
-        department: '',
-        subject: '',
-        assignedClass: '',
-        semester: '',
-        email: '',
-        phone: ''
-    });
-    const [isEditing, setIsEditing] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const { teachers, addTeachers } = useData();
+    const [search, setSearch] = useState('');
     const [filterSem, setFilterSem] = useState('All');
-    const [filterSec, setFilterSec] = useState('All');
-
-    const filteredTeachers = (teachers || []).filter(t => {
-        const matchesSearch = (t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.subject?.toLowerCase().includes(searchTerm.toLowerCase()));
-        const matchesSem = filterSem === 'All' || t.semester === filterSem;
-        const matchesSec = filterSec === 'All' || t.assignedClass?.includes(filterSec);
-        return matchesSearch && matchesSem && matchesSec;
+    const [isAddOpen, setIsAddOpen] = useState(false);
+    const [newTeacher, setNewTeacher] = useState({
+        name: '',
+        dept: 'CSE',
+        semester: 'I',
+        subjectCode: '',
+        subjectName: '',
+        section: 'A'
     });
-
-    const openAddModal = () => {
-        setIsEditing(false);
-        setCurrentTeacher({ id: null, name: '', department: '', subject: '', semester: '', assignedClass: '', email: '', phone: '' });
-        setIsModalOpen(true);
+    const handleAddTeacher = () => {
+        if (!newTeacher.name || !newTeacher.subjectCode) return;
+        addTeachers([{ ...newTeacher, id: Date.now().toString() }]);
+        setIsAddOpen(false);
+        setNewTeacher({ name: '', dept: 'CSE', semester: 'I', subjectCode: '', subjectName: '', section: 'A' });
     };
-
-    const handleEdit = (teacher) => {
-        setIsEditing(true);
-        setCurrentTeacher(teacher);
-        setIsModalOpen(true);
-    };
-
-    const handleDelete = (id) => {
-        // Removed confirmation alert as per request
-        deleteTeacher(id);
-    };
-
-    const handleClearAll = () => {
-        if (window.confirm('WARNING: This will delete ALL teachers. This action cannot be undone. Are you sure?')) {
-            clearTeachers();
-        }
-    };
-
-    const handleSaveTeacher = () => {
-        if (isEditing) {
-            updateTeacher(currentTeacher);
-        } else {
-            addTeacher(currentTeacher);
-        }
-        setIsModalOpen(false);
-    };
-
+    const filtered = teachers.filter(t => {
+        const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) ||
+            (t.subjectName && t.subjectName.toLowerCase().includes(search.toLowerCase()));
+        const matchesSem = filterSem === 'All' || t.semester === filterSem;
+        return matchesSearch && matchesSem;
+    });
+    const uniqueSems = Array.from(new Set(teachers.map(t => t.semester).filter(Boolean))).sort();
     return (
         <div>
-            <div className="page-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="page-header">
                 <div>
-                    <h1 style={{ fontSize: '2.25rem', fontWeight: '900', letterSpacing: '-0.025em', color: '#0f172a' }}>Teachers</h1>
-                    <p style={{ color: '#64748b', fontSize: '1rem' }}>Manage faculty appointments and assignments ({filteredTeachers.length} shown).</p>
+                    <h1 className="page-title">Teachers</h1>
+                    <p style={{ color: 'var(--text-light)' }}>Faculty allocations and details</p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button className="btn btn-primary" onClick={openAddModal} style={{ padding: '0.625rem 1.25rem', borderRadius: '10px', fontWeight: '700', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                        <Plus size={18} style={{ marginRight: '0.5rem' }} />
-                        Add Teacher
-                    </button>
-                    <button
-                        className="btn btn-outline"
-                        onClick={handleClearAll}
-                        style={{ padding: '0.625rem', borderRadius: '10px', color: '#ef4444', borderColor: '#fee2e2', background: '#fff' }}
-                    >
-                        <Trash2 size={18} />
-                    </button>
-                </div>
+                <button className="btn btn-primary" onClick={() => setIsAddOpen(true)}>
+                    <Plus size={18} style={{ marginRight: 8 }} /> Add Teacher
+                </button>
             </div>
-
-            <div className="toolbar" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', background: '#fff', padding: '0.75rem', borderRadius: '12px', border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', flex: '1', minWidth: '300px' }}>
-                    <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                    <input
-                        type="text"
-                        placeholder="Search names or subjects..."
-                        className="input-field"
-                        style={{ paddingLeft: '38px', width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #f1f5f9', background: '#f8fafc', fontSize: '0.9rem' }}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            <div className="card" style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ position: 'relative', width: '300px' }}>
+                        <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                        <input className="input-field" style={{ width: '100%', paddingLeft: 40 }} placeholder="Search faculty..." value={search} onChange={e => setSearch(e.target.value)} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <Filter size={18} color="#94a3b8" />
+                        <select className="form-select" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
+                            <option value="All">All Semesters</option>
+                            {uniqueSems.map(s => <option key={s} value={s}>Sem {s}</option>)}
+                        </select>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <select
-                        className="input-field"
-                        style={{ padding: '0 12px', height: '42px', width: '140px', borderRadius: '8px', border: '1px solid #f1f5f9', background: filterSem === 'All' ? '#f8fafc' : '#fff', fontSize: '0.85rem', fontWeight: '600' }}
-                        value={filterSem}
-                        onChange={(e) => setFilterSem(e.target.value)}
-                    >
-                        <option value="All">All Semesters</option>
-                        {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'].map(s => <option key={s} value={s}>Sem {s}</option>)}
-                    </select>
-                    <select
-                        className="input-field"
-                        style={{ padding: '0 12px', height: '42px', width: '140px', borderRadius: '8px', border: '1px solid #f1f5f9', background: filterSec === 'All' ? '#f8fafc' : '#fff', fontSize: '0.85rem', fontWeight: '600' }}
-                        value={filterSec}
-                        onChange={(e) => setFilterSec(e.target.value)}
-                    >
-                        <option value="All">All Sections</option>
-                        {['A', 'B', 'C', 'D', 'E'].map(s => <option key={s} value={s}>Section {s}</option>)}
-                    </select>
-                </div>
-            </div>
-
-            <div className="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Dept</th>
-                            <th>Sem</th>
-                            <th>Subject</th>
-                            <th>Section</th>
-                            <th style={{ textAlign: 'right' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredTeachers.length === 0 ? (
+                <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+                    <table>
+                        <thead>
                             <tr>
-                                <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)' }}>
-                                    {teachers.length === 0 ? "No teacher assignments found. Add one to get started." : "No faculty match your filters."}
-                                </td>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Semester</th>
+                                <th>Subject</th>
+                                <th>Section</th>
+                                <th style={{ textAlign: 'right' }}>Action</th>
                             </tr>
-                        ) : (
-                            filteredTeachers.map((teacher) => (
-                                <tr key={teacher.id}>
+                        </thead>
+                        <tbody>
+                            {filtered.map((t, idx) => (
+                                <tr key={t.id || idx}>
+                                    <td style={{ fontWeight: '500' }}>{t.name}</td>
+                                    <td><span className="badge badge-info">{t.dept || 'General'}</span></td>
+                                    <td>Sem {t.semester}</td>
                                     <td>
-                                        <div style={{ fontWeight: 500 }}>{teacher.name}</div>
+                                        <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{t.subjectCode}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{t.subjectName}</div>
                                     </td>
-                                    <td>
-                                        <span className="badge badge-info">{teacher.department}</span>
-                                    </td>
-                                    <td>
-                                        <span className="badge badge-outline">{teacher.semester || '-'}</span>
-                                    </td>
-                                    <td>
-                                        {teacher.subject || '-'}
-                                    </td>
-                                    <td>
-                                        {teacher.assignedClass || '-'}
-                                    </td>
+                                    <td><span className="badge badge-outline">Section {t.section}</span></td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                            <button className="btn btn-outline" style={{ padding: '6px' }} onClick={() => handleEdit(teacher)}>
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button className="btn btn-outline" style={{ padding: '6px', color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => handleDelete(teacher.id)}>
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
+                                        <button className="btn-outline" style={{ border: 'none', color: 'var(--danger)', padding: '4px' }}>
+                                            <Trash2 size={16} />
+                                        </button>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ))}
+                            {filtered.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No records found.</td></tr>}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={isEditing ? "Edit Teacher" : "Add New Teacher"}
-                footer={
-                    <>
-                        <button className="btn btn-outline" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                        <button className="btn btn-primary" onClick={handleSaveTeacher}>{isEditing ? "Save Changes" : "Add Teacher"}</button>
-                    </>
-                }
-            >
+            <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add Teacher Allocation">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div className="form-group">
-                        <label className="form-label">Full Name</label>
-                        <input
-                            type="text"
-                            className="input-field w-full"
-                            placeholder="e.g. Dr. Sarah Wilson"
-                            value={currentTeacher.name}
-                            onChange={(e) => setCurrentTeacher({ ...currentTeacher, name: e.target.value })}
-                        />
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Faculty Name</label>
+                        <input className="input-field" style={{ width: '100%' }} value={newTeacher.name} onChange={e => setNewTeacher({ ...newTeacher, name: e.target.value })} placeholder="e.g. Dr. A. Smith" />
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">Department</label>
-                        <input
-                            type="text"
-                            className="input-field w-full"
-                            placeholder="e.g. Computer Science"
-                            value={currentTeacher.department}
-                            onChange={(e) => setCurrentTeacher({ ...currentTeacher, department: e.target.value })}
-                        />
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Department</label>
+                        <input className="input-field" style={{ width: '100%' }} value={newTeacher.dept} onChange={e => setNewTeacher({ ...newTeacher, dept: e.target.value })} placeholder="e.g. CSE" />
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">Subject</label>
-                        <select
-                            className="input-field w-full"
-                            value={currentTeacher.subject || ''}
-                            onChange={(e) => setCurrentTeacher({ ...currentTeacher, subject: e.target.value })}
-                        >
-                            <option value="">Select a subject...</option>
-                            {subjects.map(subject => (
-                                <option key={subject.id} value={`${subject.code} - ${subject.name}`}>
-                                    {subject.code} - {subject.name}
-                                </option>
-                            ))}
-                        </select>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Semester</label>
+                            <select className="input-field" style={{ width: '100%' }} value={newTeacher.semester} onChange={e => setNewTeacher({ ...newTeacher, semester: e.target.value })}>
+                                {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'].map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Section</label>
+                            <select className="input-field" style={{ width: '100%' }} value={newTeacher.section} onChange={e => setNewTeacher({ ...newTeacher, section: e.target.value })}>
+                                {['A', 'B', 'C', 'D', 'E', 'F'].map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">Semester</label>
-                        <select
-                            className="form-select"
-                            value={currentTeacher.semester || ''}
-                            onChange={(e) => setCurrentTeacher({ ...currentTeacher, semester: e.target.value })}
-                        >
-                            <option value="">Select Semester...</option>
-                            {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'].map(s => (
-                                <option key={s} value={s}>Semester {s}</option>
-                            ))}
-                        </select>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Subject Code</label>
+                        <input className="input-field" style={{ width: '100%' }} value={newTeacher.subjectCode} onChange={e => setNewTeacher({ ...newTeacher, subjectCode: e.target.value })} placeholder="e.g. CS123" />
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">Section</label>
-                        <select
-                            className="form-select"
-                            value={currentTeacher.assignedClass || ''}
-                            onChange={(e) => setCurrentTeacher({ ...currentTeacher, assignedClass: e.target.value })}
-                        >
-                            <option value="">Select a section...</option>
-                            {['Section A', 'Section B', 'Section C', 'Section D', 'Section E'].map(sec => (
-                                <option key={sec} value={sec}>{sec}</option>
-                            ))}
-                        </select>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Subject Name</label>
+                        <input className="input-field" style={{ width: '100%' }} value={newTeacher.subjectName} onChange={e => setNewTeacher({ ...newTeacher, subjectName: e.target.value })} placeholder="e.g. Data Structures" />
                     </div>
+                    <button className="btn btn-primary" onClick={handleAddTeacher} style={{ marginTop: '0.5rem' }}>
+                        <Save size={18} style={{ marginRight: 8 }} /> Save Allocation
+                    </button>
                 </div>
             </Modal>
-            <DataImporter />
         </div>
     );
 };
-
 export default Teachers;

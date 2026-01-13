@@ -1,50 +1,45 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
-import './Modal.css';
-
-const Modal = ({ isOpen, onClose, title, children, footer }) => {
-    useEffect(() => {
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') onClose();
-        };
-
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-            window.addEventListener('keydown', handleEscape);
-        }
-
-        return () => {
-            document.body.style.overflow = 'unset';
-            window.removeEventListener('keydown', handleEscape);
-        };
-    }, [isOpen, onClose]);
-
+const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
-
     return (
-        <div className="modal-overlay" onClick={(e) => {
-            if (e.target === e.currentTarget) onClose();
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(2px)'
         }}>
-            <div className="modal-container">
-                <div className="modal-header">
-                    <h3 className="modal-title">{title}</h3>
-                    <button className="modal-close" onClick={onClose}>
+            <div className="card" style={{
+                width: '100%',
+                maxWidth: '500px',
+                padding: '0',
+                border: 'none',
+                boxShadow: 'var(--shadow-lg)'
+            }}>
+                <div style={{
+                    padding: '1.25rem 1.5rem',
+                    borderBottom: '1px solid var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: '600' }}>{title}</h3>
+                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-light)', padding: 0 }}>
                         <X size={20} />
                     </button>
                 </div>
-
-                <div className="modal-content">
+                <div style={{ padding: '1.5rem' }}>
                     {children}
                 </div>
-
-                {footer && (
-                    <div className="modal-footer">
-                        {footer}
-                    </div>
-                )}
             </div>
         </div>
     );
 };
-
 export default Modal;

@@ -1,50 +1,54 @@
 const XLSX = require('xlsx');
-const fs = require('fs');
 
-// 1. Teachers Data
-const teachersData = [
-    { Name: "Dr. Alice Smith", Department: "Computer Science", Workload: 12 },
-    { Name: "Prof. Bob Jones", Department: "Electronics", Workload: 10 },
-    { Name: "Ms. Carol White", Department: "Mathematics", Workload: 14 },
-    { Name: "Dr. David Black", Department: "Physics", Workload: 8 }
-];
+// Data based on the user's provided structure
+const data = [
+    // Header Row
+    ["SEMESTER", "SUB.COD", "SUBJECT NAME", "A", "B", "C", "D", "E", "No of Section", "Sub Hand Dept", "Tutorial", "No.of Hours allotted", "SATURDAY"],
+    
+    // Semester II - Theory
+    ["II CSE", "HS2221", "Communicative English", "HAJIRA B", "M.KSUBA", "HAJIRA B", "M.KSUBA", "VIJAY", 5, "ENG", "NO", 2, 0],
+    ["II CSE", "MA2224", "Probability, Statistics and Linear Algebra", "M1", "M2", "M3", "M4", "M5", 5, "MAT", "YES", 5, 1],
+    ["II CSE", "PH2221", "Quantum Physics", "P1", "P2", "P3", "P4", "P5", 5, "PHY", "NO", 4, 1],
+    ["II CSE", "CS2221", "Programming in C", "AJ", "LED", "NI", "TD", "MK", 5, "CSE", "NO", 4, 1],
+    
+    // Semester II - Practicals
+    ["II CSE", "GE2281", "Engineering Practice Laboratory", "EP1", "EP2", "EP3", "EP4", "EP5", 5, "MECH/ECE", 0, 4, 0],
+    ["II CSE", "CS2281", "Programming in C Laboratory", "AJ", "LED", "NI", "TD", "MK", 5, "CSE", 0, 3, 0],
+    
+    // Semester IV - Theory
+    ["IV CSE", "CS2411", "Theory of Computation", "CS", "ND", "DS", "NJ", "", 4, "CSE", "NO", 4, 1],
+    ["IV CSE", "CS2412", "Database Management Systems", "VNK", "SSP", "RS", "NPP", "", 4, "CSE", "NO", 4, 1],
+    ["IV CSE", "CS2413", "Computer Networks", "GIM", "LHL", "SAF", "", "", 3, "CSE", "NO", 4, 1],
 
-// 2. Subjects Data
-const subjectsData = [
-    { Code: "CS101", Name: "Introduction to Programming", Type: "Lecture", Credits: 3 },
-    { Code: "CS102", Name: "Data Structures & Algorithms", Type: "Lecture", Credits: 3 },
-    { Code: "CS101L", Name: "Programming Lab", Type: "Lab", Credits: 1 }, // Standard Lab
-    { Code: "CS102L", Name: "Data Structures Lab", Type: "Lab", Credits: 1 }, // Potential Integrated Lab
-    { Code: "MA101", Name: "Calculus I", Type: "Lecture", Credits: 4 },
-    { Code: "PH101", Name: "Applied Physics", Type: "Lecture", Credits: 3 }
+    // Semester VI - Theory
+    ["VI CSE", "CS2611", "Cryptography and Cyber Security", "MST", "GM", "VP", "ND", "", 4, "CSE", "NO", 4, 0],
+    ["VI CSE", "CS2612", "Internet of Things", "ATP", "SSB", "DS", "MJ", "", 4, "CSE", "NO", 3, 1]
 ];
 
 // Create Workbook
 const wb = XLSX.utils.book_new();
 
-// Create Worksheets
-const wsTeachers = XLSX.utils.json_to_sheet(teachersData);
-const wsSubjects = XLSX.utils.json_to_sheet(subjectsData);
+// Create Worksheet
+const ws = XLSX.utils.aoa_to_sheet(data);
 
-// Set column widths for better readability (optional, but nice if user opens it)
-const wscols = [
-    { wch: 20 }, // Name
-    { wch: 20 }, // Department
-    { wch: 10 }  // Workload
-];
-wsTeachers['!cols'] = wscols;
-
-const wscolsSub = [
+// Set column widths
+ws['!cols'] = [
+    { wch: 10 }, // Semester
     { wch: 10 }, // Code
-    { wch: 30 }, // Name
-    { wch: 10 }, // Type
-    { wch: 8 }   // Credits
+    { wch: 40 }, // Name
+    { wch: 10 }, // A
+    { wch: 10 }, // B
+    { wch: 10 }, // C
+    { wch: 10 }, // D
+    { wch: 10 }, // E
+    { wch: 12 }, // Num Sec
+    { wch: 10 }, // Dept
+    { wch: 8 },  // Tutorial
+    { wch: 15 }, // Hours
+    { wch: 10 }  // Saturday
 ];
-wsSubjects['!cols'] = wscolsSub;
 
-// Append Sheets to Workbook
-XLSX.utils.book_append_sheet(wb, wsTeachers, "Teachers");
-XLSX.utils.book_append_sheet(wb, wsSubjects, "Subjects");
+XLSX.utils.book_append_sheet(wb, ws, "Allocations");
 
 // Write File
 const filePath = 'sample_timetable_data.xlsx';
