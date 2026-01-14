@@ -15,7 +15,7 @@ const Sidebar = () => {
         <aside className="app-sidebar">
             <div className="sidebar-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <img src="/logo.png" alt="PSNA Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+                    <img src="/logo.png" alt="PSNA Logo" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
                     <span style={{ fontWeight: 800, fontSize: '1.4rem', letterSpacing: '1px' }}>PSNA</span>
                 </div>
             </div>
