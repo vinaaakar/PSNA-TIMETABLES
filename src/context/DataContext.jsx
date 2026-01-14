@@ -5,7 +5,9 @@ export const DataProvider = ({ children }) => {
     const safeParse = (key, fallback) => {
         try {
             const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : fallback;
+            if (!item) return fallback;
+            const parsed = JSON.parse(item);
+            return parsed === null ? fallback : parsed;
         } catch (e) {
             console.error(`Error parsing ${key}`, e);
             return fallback;
@@ -30,6 +32,7 @@ export const DataProvider = ({ children }) => {
             return [...prev, ...uniqueNew];
         });
     };
+    const deleteTeachers = (id) => setTeachers(prev => prev.filter(t => t.id !== id));
     const clearTeachers = () => setTeachers([]);
     const addSubjects = (newSubjects) => {
         setSubjects(prev => {
@@ -38,6 +41,7 @@ export const DataProvider = ({ children }) => {
             return [...prev, ...uniqueNew];
         });
     };
+    const deleteSubjects = (id) => setSubjects(prev => prev.filter(s => s.id !== id));
     const clearSubjects = () => setSubjects([]);
     const updateSchedule = (semester, newSchedule) => {
         setSchedule(prev => ({
@@ -51,8 +55,10 @@ export const DataProvider = ({ children }) => {
             subjects,
             schedule,
             addTeachers,
+            deleteTeachers,
             clearTeachers,
             addSubjects,
+            deleteSubjects,
             clearSubjects,
             updateSchedule
         }}>

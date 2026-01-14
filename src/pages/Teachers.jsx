@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { Search, Filter, Plus, Trash2, Save } from 'lucide-react';
 import Modal from '../components/Modal';
 const Teachers = () => {
-    const { teachers, addTeachers } = useData();
+    const { teachers, addTeachers, deleteTeachers, clearTeachers } = useData();
     const [search, setSearch] = useState('');
     const [filterSem, setFilterSem] = useState('All');
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -35,9 +35,16 @@ const Teachers = () => {
                     <h1 className="page-title">Teachers</h1>
                     <p style={{ color: 'var(--text-light)' }}>Faculty allocations and details</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setIsAddOpen(true)}>
-                    <Plus size={18} style={{ marginRight: 8 }} /> Add Teacher
-                </button>
+                <div>
+                    <button className="btn btn-danger" onClick={() => {
+                        if (window.confirm('Are you sure you want to delete ALL teacher allocations? This cannot be undone.')) clearTeachers();
+                    }} style={{ backgroundColor: 'var(--danger)', color: 'white', border: 'none', marginRight: '1rem' }}>
+                        <Trash2 size={18} style={{ marginRight: 8 }} /> Delete All
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setIsAddOpen(true)}>
+                        <Plus size={18} style={{ marginRight: 8 }} /> Add Teacher
+                    </button>
+                </div>
             </div>
             <div className="card" style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -77,7 +84,13 @@ const Teachers = () => {
                                     </td>
                                     <td><span className="badge badge-outline">Section {t.section}</span></td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <button className="btn-outline" style={{ border: 'none', color: 'var(--danger)', padding: '4px' }}>
+                                        <button
+                                            className="btn-outline"
+                                            style={{ border: 'none', color: 'var(--danger)', padding: '4px', cursor: 'pointer' }}
+                                            onClick={() => {
+                                                if (window.confirm('Delete this teacher allocation?')) deleteTeachers(t.id);
+                                            }}
+                                        >
                                             <Trash2 size={16} />
                                         </button>
                                     </td>

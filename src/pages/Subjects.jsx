@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { Search, Plus, Filter, Trash2, Save } from 'lucide-react';
 import Modal from '../components/Modal';
 const Subjects = () => {
-    const { subjects, addSubjects } = useData();
+    const { subjects, addSubjects, deleteSubjects, clearSubjects } = useData();
     const [search, setSearch] = useState('');
     const [filterSem, setFilterSem] = useState('All');
     const [filterType, setFilterType] = useState('All');
@@ -37,9 +37,16 @@ const Subjects = () => {
                     <h1 className="page-title">Subjects</h1>
                     <p style={{ color: 'var(--text-light)' }}>View and edit course details</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setIsAddOpen(true)}>
-                    <Plus size={18} style={{ marginRight: 8 }} /> Add Subject
-                </button>
+                <div>
+                    <button className="btn btn-danger" onClick={() => {
+                        if (window.confirm('Are you sure you want to delete ALL subjects? This cannot be undone.')) clearSubjects();
+                    }} style={{ backgroundColor: 'var(--danger)', color: 'white', border: 'none', marginRight: '1rem' }}>
+                        <Trash2 size={18} style={{ marginRight: 8 }} /> Delete All
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setIsAddOpen(true)}>
+                        <Plus size={18} style={{ marginRight: 8 }} /> Add Subject
+                    </button>
+                </div>
             </div>
             <div className="card" style={{ padding: '0' }}>
                 <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -91,7 +98,13 @@ const Subjects = () => {
                                     <td style={{ textAlign: 'center', color: s.satCount > 0 ? 'var(--primary)' : '#cbd5e1', fontWeight: s.satCount > 0 ? '700' : '400' }}>{s.satCount || 0}</td>
                                     <td style={{ fontWeight: '600' }}>{(parseInt(s.credit) || 0) + (parseInt(s.satCount) || 0)}</td>
                                     <td style={{ textAlign: 'center' }}>
-                                        <button className="btn-outline" style={{ border: 'none', color: 'var(--text-light)', padding: '4px' }}>
+                                        <button
+                                            className="btn-outline"
+                                            style={{ border: 'none', color: 'var(--text-light)', padding: '4px', cursor: 'pointer' }}
+                                            onClick={() => {
+                                                if (window.confirm('Delete this subject?')) deleteSubjects(s.id);
+                                            }}
+                                        >
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
