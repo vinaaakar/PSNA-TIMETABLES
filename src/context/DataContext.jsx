@@ -16,15 +16,24 @@ export const DataProvider = ({ children }) => {
     const [teachers, setTeachers] = useState(safeParse('timetable_teachers', []));
     const [subjects, setSubjects] = useState(safeParse('timetable_subjects', []));
     const [schedule, setSchedule] = useState(safeParse('timetable_schedule', {}));
+    const [facultyAccounts, setFacultyAccounts] = useState(safeParse('timetable_faculty_accounts', []));
+
     useEffect(() => {
         localStorage.setItem('timetable_teachers', JSON.stringify(teachers));
     }, [teachers]);
+
     useEffect(() => {
         localStorage.setItem('timetable_subjects', JSON.stringify(subjects));
     }, [subjects]);
+
     useEffect(() => {
         localStorage.setItem('timetable_schedule', JSON.stringify(schedule));
     }, [schedule]);
+
+    useEffect(() => {
+        localStorage.setItem('timetable_faculty_accounts', JSON.stringify(facultyAccounts));
+    }, [facultyAccounts]);
+
     const addTeachers = (newTeachers) => {
         setTeachers(prev => {
             const existingIds = new Set(prev.map(t => t.id));
@@ -32,8 +41,10 @@ export const DataProvider = ({ children }) => {
             return [...prev, ...uniqueNew];
         });
     };
+
     const deleteTeachers = (id) => setTeachers(prev => prev.filter(t => t.id !== id));
     const clearTeachers = () => setTeachers([]);
+
     const addSubjects = (newSubjects) => {
         setSubjects(prev => {
             const existingIds = new Set(prev.map(s => s.id));
@@ -41,26 +52,42 @@ export const DataProvider = ({ children }) => {
             return [...prev, ...uniqueNew];
         });
     };
+
     const deleteSubjects = (id) => setSubjects(prev => prev.filter(s => s.id !== id));
     const clearSubjects = () => setSubjects([]);
+
+    const addFacultyAccounts = (newAccounts) => {
+        setFacultyAccounts(prev => {
+            const existingEmails = new Set(prev.map(a => a.email));
+            const uniqueNew = newAccounts.filter(a => !existingEmails.has(a.email));
+            return [...prev, ...uniqueNew];
+        });
+    };
+
+    const clearFacultyAccounts = () => setFacultyAccounts([]);
+
     const updateSchedule = (semester, newSchedule) => {
         setSchedule(prev => ({
             ...prev,
             [semester]: newSchedule
         }));
     };
+
     return (
         <DataContext.Provider value={{
             teachers,
             subjects,
             schedule,
+            facultyAccounts,
             addTeachers,
             deleteTeachers,
             clearTeachers,
             addSubjects,
             deleteSubjects,
             clearSubjects,
-            updateSchedule
+            updateSchedule,
+            addFacultyAccounts,
+            clearFacultyAccounts
         }}>
             {children}
         </DataContext.Provider>

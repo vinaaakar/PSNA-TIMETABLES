@@ -2,15 +2,21 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Calendar, Users, BookOpen, Layers } from 'lucide-react';
 import './Layout.css';
-const Sidebar = () => {
+const Sidebar = ({ userRole }) => {
     const location = useLocation();
-    const navItems = [
-        { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/timetable', icon: Calendar, label: 'Timetable' },
-        { path: '/allocations', icon: Layers, label: 'Allocations' },
-        { path: '/teachers', icon: Users, label: 'Teachers' },
-        { path: '/subjects', icon: BookOpen, label: 'Subjects' },
-    ];
+
+    // Define navigation items based on role
+    const navItems = userRole === 'faculty'
+        ? [
+            { path: '/', icon: LayoutDashboard, label: 'My Timetable' }
+        ]
+        : [
+            { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+            { path: '/timetable', icon: Calendar, label: 'Timetable' },
+            { path: '/allocations', icon: Layers, label: 'Allocations' },
+            { path: '/teachers', icon: Users, label: 'Teachers' },
+            { path: '/subjects', icon: BookOpen, label: 'Subjects' },
+        ];
     return (
         <aside className="app-sidebar">
             <div className="sidebar-header">

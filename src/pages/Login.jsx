@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
+import { useData } from '../context/DataContext';
 import { User, Lock, ArrowRight } from 'lucide-react';
+
 const Login = ({ onLogin }) => {
+    const { facultyAccounts } = useData();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (email === 'admin@example.com' && password === 'admin') {
-            onLogin();
+
+        const facultyUser = facultyAccounts?.find(acc => acc.email === email && acc.password === password);
+
+        if (email === 'admin@psnacet.edu.in' && password === 'admin') {
+            onLogin('admin', { name: 'Admin' });
+        } else if (facultyUser) {
+            onLogin('faculty', facultyUser);
         } else {
             setError('Invalid credentials');
         }
@@ -29,7 +38,7 @@ const Login = ({ onLogin }) => {
                                 type="email"
                                 className="input-field"
                                 style={{ width: '100%', paddingLeft: '40px', boxSizing: 'border-box' }}
-                                placeholder="admin@example.com"
+                                placeholder="admin@psnacet.edu.in or faculty@psnacet.edu.in"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                             />

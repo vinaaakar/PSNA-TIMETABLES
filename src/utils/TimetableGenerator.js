@@ -110,6 +110,9 @@ export const generateClassTimetable = (semester, section, subjects, reservedSlot
 
             for (let d of days) {
                 for (let s = 0; s <= SLOTS - lab.duration; s++) {
+                    // Constraint: Lab shouldn't start at P1 (Time 08:45, Index 0) unless relaxed
+                    if (!relaxed && s === 0) continue;
+
                     if (lab.duration === 4) {
                         if (s !== 3) continue;
                     } else if (lab.duration === 3) {
@@ -136,8 +139,10 @@ export const generateClassTimetable = (semester, section, subjects, reservedSlot
                     score += Math.random() * 50;
 
                     // Preference: Empty Days (Max 1 Lab per Day)
+                    // In relaxed mode, we reduce the bonus for empty days to allow stacking more easily. 
+                    // If relaxed, bonus is 0 (we don't care if there's already a lab).
                     const dayHasLab = grid[d].some(cell => cell && cell.type === 'LAB');
-                    if (!dayHasLab) score += 10000;
+                    if (!dayHasLab) score += relaxed ? 0 : 10000;
                     let startSlotUsed = false;
                     for (let checkD = 0; checkD < 6; checkD++) {
                         const cell = grid[checkD][s];
@@ -214,7 +219,7 @@ export const generateClassTimetable = (semester, section, subjects, reservedSlot
                 // CONSTRAINT: Avoid Theory on the same day as Lab for the same subject
                 const hasLabOnDay = grid[d].some(cell => cell && cell.code === unit.code && cell.type === 'LAB');
                 if (hasLabOnDay) {
-                    score -= 40000; // Major penalty
+                    score -= relaxed ? 1000 : 40000; // In relaxed mode, allow theory on lab day slightly more
                 }
 
                 // Preference: Stagger Slots (Don't have MATH at 9am every day)

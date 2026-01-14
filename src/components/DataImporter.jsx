@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import { Upload, AlertCircle, CheckCircle } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 const DataImporter = () => {
-    const { addTeachers, addSubjects, clearTeachers, clearSubjects } = useData();
+    const { addTeachers, addSubjects, clearTeachers, clearSubjects, addFacultyAccounts, clearFacultyAccounts } = useData();
     const [file, setFile] = useState(null);
     const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
@@ -198,6 +198,23 @@ const DataImporter = () => {
 
         addSubjects(newSubjects);
         addTeachers(newTeachers);
+
+        // Generate Faculty Accounts
+        const uniqueNames = [...new Set(newTeachers.map(t => t.name))];
+        const accounts = uniqueNames.map(name => {
+            // Strip out "Dr." or "Mr." or "Mrs." and spaces, then lowercase
+            const cleanName = name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.)\s*/i, '') // Remove prefix if present
+                .toLowerCase().replace(/[^a-z0-9]/g, ''); // Keep only alphanumeric
+            return {
+                id: uuidv4(),
+                name: name,
+                email: `${cleanName}@psnacet.edu.in`,
+                password: cleanName // Start with simple password same as username part
+            };
+        });
+        clearFacultyAccounts();
+        addFacultyAccounts(accounts);
+
         setStatus('success');
 
         const labCount = newSubjects.filter(s => s.type === 'Lab').length;
