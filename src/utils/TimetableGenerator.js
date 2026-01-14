@@ -193,17 +193,28 @@ export const generateClassTimetable = (semester, section, subjects, reservedSlot
                     const hasMorning = existingSlots.some(idx => idx < 4);
                     const hasAfternoon = existingSlots.some(idx => idx >= 4);
 
+                    // CONSTRAINT: Max 2 hours of theory per day per subject
+                    if (existingSlots.length >= 2) {
+                        score -= 50000; // Strong avoid 3+ hours
+                    }
+
                     if ((isMorning && hasMorning) || (isAfternoon && hasAfternoon)) {
                         // Same Half Collision (e.g. Two Morning slots) -> Strongly Avoid
                         score -= 20000;
                     } else {
                         // Split Session (Morning + Afternoon) -> Allowed as Fallback
                         // Still prefer different days, but this is better than failing.
-                        score -= 1000;
+                        score -= 5000; // Increased penalty for split sessions to encourage unique days
                     }
                 } else {
                     // Unique Day -> Preferred
                     score += 5000;
+                }
+
+                // CONSTRAINT: Avoid Theory on the same day as Lab for the same subject
+                const hasLabOnDay = grid[d].some(cell => cell && cell.code === unit.code && cell.type === 'LAB');
+                if (hasLabOnDay) {
+                    score -= 40000; // Major penalty
                 }
 
                 // Preference: Stagger Slots (Don't have MATH at 9am every day)
