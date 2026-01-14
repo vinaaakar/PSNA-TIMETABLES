@@ -332,20 +332,22 @@ const FacultyDashboard = ({ facultyName }) => {
                                             ) : ''}
                                         </td>
                                     );
-                                    if (sIdx === 1) cols.push(
-                                        <td key="brk" rowSpan="6" style={{ verticalAlign: 'middle', padding: 0 }}>
-                                            <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', margin: '0 auto', fontSize: '9px', fontWeight: 'bold' }}>
-                                                BREAK (10:35-10:55)
-                                            </div>
-                                        </td>
-                                    );
-                                    if (sIdx === 3) cols.push(
-                                        <td key="lch" rowSpan="6" style={{ verticalAlign: 'middle', padding: 0 }}>
-                                            <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', margin: '0 auto', fontSize: '9px', fontWeight: 'bold' }}>
-                                                LUNCH BREAK (12:35-01:45)
-                                            </div>
-                                        </td>
-                                    );
+                                    if (dIdx === 0) {
+                                        if (sIdx === 1) cols.push(
+                                            <td key="brk" rowSpan="6" style={{ verticalAlign: 'middle', padding: 0 }}>
+                                                <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', margin: '0 auto', fontSize: '9px', fontWeight: 'bold' }}>
+                                                    BREAK (10:35-10:55)
+                                                </div>
+                                            </td>
+                                        );
+                                        if (sIdx === 3) cols.push(
+                                            <td key="lch" rowSpan="6" style={{ verticalAlign: 'middle', padding: 0 }}>
+                                                <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', margin: '0 auto', fontSize: '9px', fontWeight: 'bold' }}>
+                                                    LUNCH BREAK (12:35-01:45)
+                                                </div>
+                                            </td>
+                                        );
+                                    }
                                     return cols;
                                 })}
                             </tr>

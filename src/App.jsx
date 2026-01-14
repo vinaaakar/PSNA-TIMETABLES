@@ -51,7 +51,7 @@ function App() {
             {!isAuthenticated ? (
                 <Login onLogin={handleLogin} />
             ) : (
-                <Layout onLogout={handleLogout} userRole={userRole}>
+                <Layout onLogout={handleLogout} userRole={userRole} currentUser={currentUser}>
                     <Routes>
                         {userRole === 'admin' ? (
                             <>

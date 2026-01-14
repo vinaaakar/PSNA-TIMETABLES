@@ -2,7 +2,11 @@ import React from 'react';
 import { LogOut, Bell, User } from 'lucide-react';
 import './Layout.css';
 
-const Header = ({ onLogout }) => {
+const Header = ({ onLogout, currentUser }) => {
+    const displayName = currentUser?.name || 'Admin';
+    const displayEmail = currentUser?.email || 'admin@psnacet.edu.in';
+    const initial = displayName.charAt(0).toUpperCase();
+
     return (
         <header className="app-header">
             <div className="header-title">
@@ -11,11 +15,11 @@ const Header = ({ onLogout }) => {
 
             <div className="header-profile">
                 <div style={{ textAlign: 'right', marginRight: '0.5rem' }}>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>Admin</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>admin@example.com</div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: '600', textTransform: 'capitalize' }}>{displayName}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>{displayEmail}</div>
                 </div>
 
-                <div className="avatar">A</div>
+                <div className="avatar">{initial}</div>
 
                 <div style={{ width: '1px', height: '24px', background: 'var(--border)', margin: '0 0.5rem' }}></div>
 
