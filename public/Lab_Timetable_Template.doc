@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    body { font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.2; }
+    .header { text-align: center; font-weight: bold; font-size: 16pt; margin-bottom: 5px; }
+    .subheader { text-align: center; font-style: italic; font-size: 14pt; margin-bottom: 5px; }
+    .dept { text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 15px; }
+    .title { text-align: center; font-weight: bold; font-size: 14pt; text-decoration: underline; margin-bottom: 5px; }
+    .year { text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 20px; }
+    
+    .info { font-weight: bold; font-size: 11pt; margin-bottom: 10px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; }
+    th, td { border: 1px solid black; padding: 5px; text-align: center; font-size: 10pt; }
+    .day-col { width: 120px; text-align: center; font-weight: bold; }
+    
+    .footer { display: flex; justify-content: space-between; margin-top: 50px; font-weight: bold; font-size: 11pt; }
+    
+    .instruction-box { 
+        border: 2px dashed #666; 
+        padding: 15px; 
+        margin-bottom: 20px; 
+        background-color: #f9f9f9;
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+    }
+</style>
+</head>
+<body>
+
+    <div class="instruction-box">
+        <strong>WORD TEMPLATE INSTRUCTIONS (READ FIRST):</strong><br>
+        1. This template is used by the "Word Preview" feature to understand your Lab constraints.<br>
+        2. Fill in the Lab Subject Code (e.g., <strong>CS2611-A</strong>) in the corresponding day and time slot.<br>
+        3. The system scans this table to reserve the exact slots for specific Lab batches.<br>
+        4. Do not change the table structure (Day and Time headers).
+    </div>
+
+    <div class="header">P.S.N.A. COLLEGE OF ENGINEERING & TECHNOLOGY, DINIDIGUL</div>
+    <div class="subheader">(An Autonomous Institution Affiliated to Anna University)</div>
+    <div class="dept">Department of Computer Science and Engineering</div>
+    
+    <div class="title">LAB TIME TABLE</div>
+    <div class="year">2025- 2026(EVEN)</div>
+
+    <div class="info">Course: B.E</div>
+    <div class="info">Venue: Software Development Laboratory (Second Floor)</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="day-col">Day</th>
+                <th>8.45 am - 9.40am</th>
+                <th>9.40 am - 10.35 am</th>
+                <th>10.55 am - 11.45am</th>
+                <th>11.45 am - 12.35pm</th>
+                <th>1.45 pm - 2.35 pm</th>
+                <th>2.35 pm - 3.25 pm</th>
+                <th>3.25 pm - 4.15 pm</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="day-col">Monday</td>
+                <td></td>
+                <td></td>
+                <td>CS2611-A</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="day-col">Tuesday</td>
+                <td></td>
+                <td></td>
+                <td>CS2611-C</td>
+                <td></td>
+                <td></td>
+                <td>CS2611-D</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="day-col">Wednesday</td>
+                <td></td>
+                <td></td>
+                <td>CS2611-B</td>
+                <td></td>
+                <td></td>
+                <td>CS2611-A</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="day-col">Thursday</td>
+                <td></td>
+                <td></td>
+                <td>CS2611-B</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="day-col">Friday</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>CS2611-D</td>
+                <td></td>
+                <td>CS2611-C</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="day-col">Saturday</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div>DEPT.TT I/C</div>
+        <div>HOD/CSE</div>
+    </div>
+
+</body>
+</html>
