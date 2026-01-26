@@ -263,7 +263,7 @@ const WordPreview = () => {
                 </div>
                 {fileName && (
                     <div style={{ display: 'flex', gap: '1rem' }}>
-                        <button className="btn btn-outline" onClick={handleReset}><RefreshCw size={18} /> Reset</button>
+                        <button className="btn btn-outline btn-rotate-icon" onClick={handleReset}><RefreshCw size={18} /> Reset</button>
                         <button className="btn btn-primary" onClick={processWordConstraints} disabled={loading || extractedConstraints.length === 0}>
                             <Lock size={18} /> Lock Constraints
                         </button>

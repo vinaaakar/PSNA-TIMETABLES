@@ -216,7 +216,7 @@ const ExcelPreview = () => {
                     <p>M=Weekday, N=Sat | Sections A-E Only</p>
                 </div>
                 <div className="header-actions">
-                    <button className="btn btn-outline" onClick={() => { setGrid([]); setFileName(''); sessionStorage.removeItem('excel_preview_grid'); }}>
+                    <button className="btn btn-outline btn-rotate-icon" onClick={() => { setGrid([]); setFileName(''); sessionStorage.removeItem('excel_preview_grid'); }}>
                         <RefreshCw size={18} /> Reset
                     </button>
                     <button className="btn btn-primary" onClick={processAndSave}>
