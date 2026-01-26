@@ -234,6 +234,7 @@ const Timetable = () => {
                     margin-bottom: 2rem; 
                     color: white; 
                     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
                 }
                 
                 .header-info { display: flex; align-items: center; gap: 1.25rem; }
@@ -246,6 +247,11 @@ const Timetable = () => {
                     align-items: center; 
                     justify-content: center; 
                     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); 
+                    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                }
+
+                .header-card:hover .header-icon {
+                    transform: rotate(12deg) scale(1.1);
                 }
                 
                 .header-text h2 { margin: 0; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.01em; }
@@ -261,6 +267,12 @@ const Timetable = () => {
                     display: flex;
                     align-items: center;
                     gap: 8px;
+                    transition: all 0.2s;
+                }
+
+                .sem-select-container:focus-within {
+                    background: rgba(255,255,255,0.15);
+                    border-color: var(--primary-light);
                 }
                 
                 .sem-select { 
@@ -291,9 +303,16 @@ const Timetable = () => {
                     align-items: center; 
                     gap: 8px; 
                     cursor: pointer; 
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
                 
-                .btn-gen:hover { background: #2563eb; }
+                .btn-gen:hover { 
+                    background: #2563eb; 
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+                }
+
+                .btn-gen:active { transform: translateY(0); }
 
                 .icon-btn { 
                     background: white; 
@@ -305,7 +324,10 @@ const Timetable = () => {
                     display: flex; 
                     align-items: center; 
                     justify-content: center; 
+                    transition: all 0.2s;
                 }
+
+                .icon-btn:hover { background: #f1f5f9; transform: scale(1.1); }
 
                 .btn-print {
                     background: white;
@@ -319,10 +341,13 @@ const Timetable = () => {
                     align-items: center;
                     gap: 8px;
                     cursor: pointer;
+                    transition: all 0.2s;
                 }
 
+                .btn-print:hover { background: #f8fafc; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
                 /* Section Tabs - PILLS */
-                .tabs-container { display: flex; gap: 10px; margin-bottom: 2rem; }
+                .tabs-container { display: flex; gap: 10px; margin-bottom: 2rem; animation: fadeIn 0.8s ease-out; }
                 
                 .tab-btn { 
                     background: white; 
@@ -333,13 +358,14 @@ const Timetable = () => {
                     font-weight: 800; 
                     font-size: 0.75rem; 
                     cursor: pointer; 
-                    transition: all 0.2s;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
                 
                 .tab-btn.active { 
                     background: #3b82f6; 
                     color: white; 
-                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); 
+                    box-shadow: 0 8px 15px rgba(59, 130, 246, 0.3); 
+                    transform: scale(1.05);
                 }
 
                 /* Timetable Grid */
@@ -349,6 +375,7 @@ const Timetable = () => {
                     padding: 2.5rem; 
                     box-shadow: 0 4px 25px rgba(0,0,0,0.02); 
                     border: 1px solid #eef2f6; 
+                    animation: fadeIn 1s ease-out;
                 }
                 
                 .grid-table { 
@@ -409,9 +436,11 @@ const Timetable = () => {
                     background: #ffffff;
                     border: 1.5px solid #f8fafc;
                     box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    animation: scaleUp 0.4s ease-out backwards;
                 }
 
-                .subject-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
+                .subject-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 24px rgba(0,0,0,0.08); border-color: #e2e8f0; }
                 
                 .theory-code { 
                     font-weight: 900; 

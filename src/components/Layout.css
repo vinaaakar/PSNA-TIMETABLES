@@ -39,6 +39,7 @@
     overflow-x: hidden;
     padding: 2rem;
     background-color: var(--bg-body);
+    animation: fadeIn 0.4s ease-out;
 }
 
 .sidebar-header {
@@ -70,17 +71,21 @@
     font-weight: 600;
     font-size: 0.9rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .nav-link:hover {
     color: white;
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: translateX(4px);
 }
 
 .nav-link.active {
     background-color: var(--primary);
     color: white;
-    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+    transform: scale(1.02);
 }
 
 .nav-link svg {

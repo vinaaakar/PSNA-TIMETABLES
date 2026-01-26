@@ -16,7 +16,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
             zIndex: 1000,
             backdropFilter: 'blur(2px)'
         }}>
-            <div className="card" style={{
+            <div className="card animate-scale-up" style={{
                 width: '100%',
                 maxWidth: '500px',
                 padding: '0',

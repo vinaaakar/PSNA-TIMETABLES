@@ -2,7 +2,7 @@ import React from 'react';
 import { useData } from '../context/DataContext';
 import { Users, BookOpen, Layers, Clock, Activity } from 'lucide-react';
 const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+    <div className="card animate-slide-up" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
         <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: color + '20', color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Icon size={28} />
         </div>
