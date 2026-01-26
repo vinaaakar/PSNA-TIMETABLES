@@ -1,0 +1,57 @@
+const XLSX = require('xlsx');
+
+// Data based on the user's provided structure
+const data = [
+    // Header Row
+    ["SEMESTER", "SUB.COD", "SUBJECT NAME", "A", "B", "C", "D", "E", "No of Section", "Sub Hand Dept", "Tutorial", "No.of Hours allotted", "SATURDAY"],
+    
+    // Semester II - Theory
+    ["II CSE", "HS2221", "Communicative English", "HAJIRA B", "M.KSUBA", "HAJIRA B", "M.KSUBA", "VIJAY", 5, "ENG", "NO", 2, 0],
+    ["II CSE", "MA2224", "Probability, Statistics and Linear Algebra", "M1", "M2", "M3", "M4", "M5", 5, "MAT", "YES", 5, 1],
+    ["II CSE", "PH2221", "Quantum Physics", "P1", "P2", "P3", "P4", "P5", 5, "PHY", "NO", 4, 1],
+    ["II CSE", "CS2221", "Programming in C", "AJ", "LED", "NI", "TD", "MK", 5, "CSE", "NO", 4, 1],
+    
+    // Semester II - Practicals
+    ["II CSE", "GE2281", "Engineering Practice Laboratory", "EP1", "EP2", "EP3", "EP4", "EP5", 5, "MECH/ECE", 0, 4, 0],
+    ["II CSE", "CS2281", "Programming in C Laboratory", "AJ", "LED", "NI", "TD", "MK", 5, "CSE", 0, 3, 0],
+    
+    // Semester IV - Theory
+    ["IV CSE", "CS2411", "Theory of Computation", "CS", "ND", "DS", "NJ", "", 4, "CSE", "NO", 4, 1],
+    ["IV CSE", "CS2412", "Database Management Systems", "VNK", "SSP", "RS", "NPP", "", 4, "CSE", "NO", 4, 1],
+    ["IV CSE", "CS2413", "Computer Networks", "GIM", "LHL", "SAF", "", "", 3, "CSE", "NO", 4, 1],
+
+    // Semester VI - Theory
+    ["VI CSE", "CS2611", "Cryptography and Cyber Security", "MST", "GM", "VP", "ND", "", 4, "CSE", "NO", 4, 0],
+    ["VI CSE", "CS2612", "Internet of Things", "ATP", "SSB", "DS", "MJ", "", 4, "CSE", "NO", 3, 1]
+];
+
+// Create Workbook
+const wb = XLSX.utils.book_new();
+
+// Create Worksheet
+const ws = XLSX.utils.aoa_to_sheet(data);
+
+// Set column widths
+ws['!cols'] = [
+    { wch: 10 }, // Semester
+    { wch: 10 }, // Code
+    { wch: 40 }, // Name
+    { wch: 10 }, // A
+    { wch: 10 }, // B
+    { wch: 10 }, // C
+    { wch: 10 }, // D
+    { wch: 10 }, // E
+    { wch: 12 }, // Num Sec
+    { wch: 10 }, // Dept
+    { wch: 8 },  // Tutorial
+    { wch: 15 }, // Hours
+    { wch: 10 }  // Saturday
+];
+
+XLSX.utils.book_append_sheet(wb, ws, "Allocations");
+
+// Write File
+const filePath = 'sample_timetable_data.xlsx';
+XLSX.writeFile(wb, filePath);
+
+console.log(`Successfully created ${filePath}`);
