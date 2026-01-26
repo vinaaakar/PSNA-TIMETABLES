@@ -291,81 +291,6 @@ const Timetable = () => {
                 
                 .header-actions { display: flex; align-items: center; gap: 0.75rem; z-index: 2; }
                 
-                /* Elegant Dropdown */
-                .custom-dropdown {
-                    position: relative;
-                    z-index: 100;
-                }
-
-                .dropdown-trigger {
-                    background: rgba(255,255,255,0.1); 
-                    border: 1px solid rgba(255,255,255,0.1); 
-                    border-radius: 12px; 
-                    padding: 0.6rem 1rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    cursor: pointer;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    min-width: 140px;
-                }
-
-                .dropdown-trigger:hover {
-                    background: rgba(255,255,255,0.15);
-                    transform: translateY(-1px);
-                    border-color: rgba(255,255,255,0.3);
-                }
-
-                .dropdown-trigger span {
-                    font-weight: 800;
-                    font-size: 0.85rem;
-                    letter-spacing: 0.02em;
-                    text-transform: uppercase;
-                }
-
-                .dropdown-menu {
-                    position: absolute;
-                    top: calc(100% + 8px);
-                    left: 0;
-                    right: 0;
-                    background: white;
-                    border-radius: 16px;
-                    padding: 8px;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-                    border: 1px solid #eef2f6;
-                    animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-
-                @keyframes slideDownFade {
-                    from { opacity: 0; transform: translateY(-10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                .dropdown-item {
-                    padding: 0.75rem 1rem;
-                    border-radius: 10px;
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    color: #475569;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    white-space: nowrap;
-                }
-
-                .dropdown-item:hover {
-                    background: #f1f5f9;
-                    color: #4f46e5;
-                    transform: translateX(4px);
-                }
-
-                .dropdown-item.active {
-                    background: #eff6ff;
-                    color: #2563eb;
-                }
-
                 .btn-gen { 
                     background: #3b82f6; 
                     color: white; 
@@ -632,18 +557,22 @@ const Timetable = () => {
                     </div>
                 </div>
                 <div className="header-actions">
-                    <div className="custom-dropdown" ref={dropdownRef}>
-                        <div className="dropdown-trigger" onClick={() => setIsSemDropdownOpen(!isSemDropdownOpen)}>
-                            <Calendar size={18} color="rgba(255,255,255,0.7)" />
+                    <div className="custom-select-container" ref={dropdownRef}>
+                        <div
+                            className={`custom-select-trigger ${isSemDropdownOpen ? 'active' : ''}`}
+                            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white' }}
+                            onClick={() => setIsSemDropdownOpen(!isSemDropdownOpen)}
+                        >
+                            <Calendar size={18} color="rgba(255,255,255,0.7)" style={{ marginRight: '8px' }} />
                             <span>{semester || 'Select Sem'}</span>
-                            <Layers size={14} style={{ opacity: 0.5, transform: isSemDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
+                            <Layers size={14} style={{ opacity: 0.5, transform: isSemDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s', marginLeft: '8px' }} />
                         </div>
                         {isSemDropdownOpen && (
-                            <div className="dropdown-menu">
+                            <div className="custom-select-menu">
                                 {availableSemesters.map(s => (
                                     <div
                                         key={s}
-                                        className={`dropdown-item ${semester === s ? 'active' : ''}`}
+                                        className={`custom-select-item ${semester === s ? 'selected' : ''}`}
                                         onClick={() => {
                                             setSemester(s);
                                             setIsSemDropdownOpen(false);

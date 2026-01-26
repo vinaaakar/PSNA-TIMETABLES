@@ -30,6 +30,17 @@ const Subjects = () => {
         return matchesSearch && matchesSem && matchesType;
     });
     const uniqueSems = Array.from(new Set(subjects.map(s => s.semester))).sort();
+    const [openDropdown, setOpenDropdown] = useState(null); // 'sem' or 'type'
+    const dropdownRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setOpenDropdown(null);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
         <div>
             <div className="page-header">
@@ -40,16 +51,16 @@ const Subjects = () => {
                 <div>
                     <button className="btn btn-danger" onClick={() => {
                         if (window.confirm('Are you sure you want to delete ALL subjects? This cannot be undone.')) clearSubjects();
-                    }} style={{ backgroundColor: 'var(--danger)', color: 'white', border: 'none', marginRight: '1rem' }}>
-                        <Trash2 size={18} style={{ marginRight: 8 }} /> Delete All
+                    }} style={{ color: 'white', marginRight: '1rem' }}>
+                        <Trash2 size={18} /> Delete All
                     </button>
                     <button className="btn btn-primary" onClick={() => setIsAddOpen(true)}>
-                        <Plus size={18} style={{ marginRight: 8 }} /> Add Subject
+                        <Plus size={18} /> Add Subject
                     </button>
                 </div>
             </div>
             <div className="card" style={{ padding: '0' }}>
-                <div className="filter-bar">
+                <div className="filter-bar" ref={dropdownRef}>
                     <div className="search-wrapper">
                         <Search size={18} />
                         <input
@@ -61,16 +72,41 @@ const Subjects = () => {
                     </div>
                     <div className="filter-group">
                         <Filter size={18} color="#94a3b8" />
-                        <select className="elegant-select" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
-                            <option value="All">All Semesters</option>
-                            {uniqueSems.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                        <select className="elegant-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
-                            <option value="All">All Types</option>
-                            <option value="Lecture">Lecture</option>
-                            <option value="Lab">Lab</option>
-                            <option value="Elective">Elective</option>
-                        </select>
+
+                        <div className="custom-select-container">
+                            <div
+                                className={`custom-select-trigger ${openDropdown === 'sem' ? 'active' : ''}`}
+                                onClick={() => setOpenDropdown(openDropdown === 'sem' ? null : 'sem')}
+                            >
+                                <span>{filterSem === 'All' ? 'All Semesters' : `Sem ${filterSem}`}</span>
+                                <Search size={14} style={{ transform: openDropdown === 'sem' ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s', opacity: 0.5 }} />
+                            </div>
+                            {openDropdown === 'sem' && (
+                                <div className="custom-select-menu">
+                                    <div className={`custom-select-item ${filterSem === 'All' ? 'selected' : ''}`} onClick={() => { setFilterSem('All'); setOpenDropdown(null); }}>All Semesters</div>
+                                    {uniqueSems.map(s => (
+                                        <div key={s} className={`custom-select-item ${filterSem === s ? 'selected' : ''}`} onClick={() => { setFilterSem(s); setOpenDropdown(null); }}>Sem {s}</div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="custom-select-container">
+                            <div
+                                className={`custom-select-trigger ${openDropdown === 'type' ? 'active' : ''}`}
+                                onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
+                            >
+                                <span>{filterType === 'All' ? 'All Types' : filterType}</span>
+                                <Search size={14} style={{ transform: openDropdown === 'type' ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s', opacity: 0.5 }} />
+                            </div>
+                            {openDropdown === 'type' && (
+                                <div className="custom-select-menu">
+                                    {['All', 'Lecture', 'Lab', 'Elective'].map(t => (
+                                        <div key={t} className={`custom-select-item ${filterType === t ? 'selected' : ''}`} onClick={() => { setFilterType(t); setOpenDropdown(null); }}>{t === 'All' ? 'All Types' : t}</div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>

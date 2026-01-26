@@ -39,6 +39,17 @@ const Teachers = () => {
         return matchesSearch && matchesSem;
     });
     const uniqueSems = Array.from(new Set(teachers.map(t => t.semester).filter(Boolean))).sort();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsDropdownOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
         <div>
             <div className="page-header">
@@ -49,16 +60,16 @@ const Teachers = () => {
                 <div>
                     <button className="btn btn-danger" onClick={() => {
                         if (window.confirm('Are you sure you want to delete ALL teacher allocations? This cannot be undone.')) clearTeachers();
-                    }} style={{ backgroundColor: 'var(--danger)', color: 'white', border: 'none', marginRight: '1rem' }}>
-                        <Trash2 size={18} style={{ marginRight: 8 }} /> Delete All
+                    }} style={{ color: 'white', marginRight: '1rem' }}>
+                        <Trash2 size={18} /> Delete All
                     </button>
                     <button className="btn btn-primary" onClick={() => setIsAddOpen(true)}>
-                        <Plus size={18} style={{ marginRight: 8 }} /> Add Teacher
+                        <Plus size={18} /> Add Teacher
                     </button>
                 </div>
             </div>
             <div className="card" style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
-                <div className="filter-bar">
+                <div className="filter-bar" ref={dropdownRef}>
                     <div className="search-wrapper">
                         <Search size={18} />
                         <input
@@ -70,10 +81,24 @@ const Teachers = () => {
                     </div>
                     <div className="filter-group">
                         <Filter size={18} color="#94a3b8" />
-                        <select className="elegant-select" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
-                            <option value="All">All Semesters</option>
-                            {uniqueSems.map(s => <option key={s} value={s}>Sem {s}</option>)}
-                        </select>
+
+                        <div className="custom-select-container">
+                            <div
+                                className={`custom-select-trigger ${isDropdownOpen ? 'active' : ''}`}
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            >
+                                <span>{filterSem === 'All' ? 'All Semesters' : `Sem ${filterSem}`}</span>
+                                <Search size={14} style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s', opacity: 0.5 }} />
+                            </div>
+                            {isDropdownOpen && (
+                                <div className="custom-select-menu">
+                                    <div className={`custom-select-item ${filterSem === 'All' ? 'selected' : ''}`} onClick={() => { setFilterSem('All'); setIsDropdownOpen(false); }}>All Semesters</div>
+                                    {uniqueSems.map(s => (
+                                        <div key={s} className={`custom-select-item ${filterSem === s ? 'selected' : ''}`} onClick={() => { setFilterSem(s); setIsDropdownOpen(false); }}>Sem {s}</div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
