@@ -60,49 +60,38 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
     const dayOrder = [0, 1, 2, 3, 4].filter(d => d !== preferredFreeDay);
     dayOrder.push(preferredFreeDay);
     counts.filter(isBlockSubject).forEach(lab => {
-        let attempt = 0;
         const isIntegrated = String(lab.type || '').toUpperCase().includes('INTEGRATED') || String(lab.name || '').toUpperCase().includes('INTEGRATED');
-
-        // Count blocks ALREADY present from Word locks (contiguous slots)
         let blocksFound = 0;
         for (let d = 0; d < 5; d++) {
-            let inBlock = false;
-            let blockLen = 0;
-            for (let s = 0; s < SLOTS; s++) {
-                if (grid[d][s] && (grid[d][s].code === lab.code || grid[d][s].subIdx === lab.subIdx)) {
-                    if (!inBlock) { inBlock = true; blockLen = 1; }
-                    else { blockLen++; }
-                } else {
-                    if (inBlock && blockLen >= 2) blocksFound++;
-                    inBlock = false; blockLen = 0;
-                }
-            }
-            if (inBlock && blockLen >= 2) blocksFound++;
+            if (grid[d].some(c => c && c.code === lab.code && (c.isLab || (c.duration && c.duration >= 2)))) blocksFound++;
         }
 
-        // For Integrated, we strictly want EXACTLY one lab block of 3 periods.
-        const maxBlocks = isIntegrated ? 1 : 10;
+        let maxBlocks = isIntegrated ? (lab.credit >= 5 ? 2 : 1) : 10;
+        let attempt = 0;
 
-        while (lab.remWk >= 2 && blocksFound < maxBlocks && attempt < 25) {
+        while (lab.remWk >= 2 && blocksFound < maxBlocks && attempt < 40) {
             attempt++;
-            // For Integrated, force 3 periods if possible. 
-            let duration = isIntegrated ? 3 : (lab.remWk >= 4 ? 4 : (lab.remWk >= 3 ? 3 : 2));
+            let duration = isIntegrated ? (lab.remWk >= 3 ? 3 : 2) : (lab.remWk >= 4 ? 4 : (lab.remWk >= 3 ? 3 : 2));
             if (duration > lab.remWk) duration = lab.remWk;
             if (duration < 2) break;
 
             let found = false;
-            // Pass 0: Try to find a day with NO other labs.
-            // Pass 1: Relaxed day (allow multiple labs per day if needed).
-            for (let pass = 0; pass < 2; pass++) {
+            // Pass 0: No other labs on day, Start at P1 (0) or P5 (4)
+            // Pass 1: Allow other labs, Start at P1 (0) or P5 (4)
+            // Pass 2: No other labs, Any start
+            // Pass 3: Allow other labs, Any start
+            for (let pass = 0; pass < 4; pass++) {
                 for (const d of dayOrder) {
-                    if (pass === 0 && grid[d].some(c => c && (c.isLab || isBlockSubject(c)))) continue;
+                    if ((pass === 0 || pass === 2) && grid[d].some(c => c && (c.isLab || isBlockSubject(c)))) continue;
                     if (globalLabUsage[`${d}-${lab.code}`]) continue;
+                    if (grid[d].some(c => c && c.code === lab.code)) continue;
 
-                    let validStarts = (duration === 4) ? [1, 3] : (duration === 3 ? [1, 4] : [1, 2, 4]);
+                    let validStarts = (pass < 2) ? [0, 4] : [0, 1, 2, 3, 4, 5];
                     validStarts.sort(() => Math.random() - 0.5);
 
                     for (let s of validStarts) {
                         if (s + duration > SLOTS) continue;
+                        if (s <= 3 && s + duration > 4) continue; // Crosses break
                         if (reservedSlots[`${d}-${s}`] && reservedSlots[`${d}-${s}`].has('LAB_START')) continue;
 
                         let free = true;
@@ -129,16 +118,14 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
                 }
                 if (found) break;
             }
-            if (!found && isIntegrated) break; // Fall to theory if no block found
-            if (!found) attempt += 5;
+            if (!found) duration--;
         }
 
         // SATURDAY LAB
         if (lab.remSat >= 2 && !grid[5].some(c => c && isBlockSubject(c))) {
             const d = 5;
             let duration = Math.min(lab.remSat, 4);
-            let validStarts = [1, 2, 3];
-            let foundSat = false;
+            let validStarts = [0, 1, 2, 3];
             for (let s of validStarts) {
                 if (s + duration > SLOTS) continue;
                 let free = true;
@@ -146,7 +133,7 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
                 if (free) {
                     for (let k = 0; k < duration; k++) grid[d][s + k] = { ...lab, isStart: k === 0, duration, isLab: true };
                     lab.remSat -= duration;
-                    foundSat = true; break;
+                    break;
                 }
             }
         }
