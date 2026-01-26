@@ -302,8 +302,7 @@ const Timetable = () => {
                     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
                     animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
                     position: relative;
-                    overflow: hidden;
-                    z-index: 1;
+                    z-index: 100;
                 }
 
                 .header-card::before {
@@ -345,6 +344,68 @@ const Timetable = () => {
                 
                 .header-actions { display: flex; align-items: center; gap: 0.75rem; z-index: 2; }
                 
+                /* Custom Dropdown Styles */
+                .custom-select-container {
+                    position: relative;
+                    min-width: 150px;
+                }
+
+                .custom-select-trigger {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0.6rem 1.2rem;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    transition: all 0.2s;
+                }
+
+                .custom-select-trigger:hover {
+                    background: rgba(255,255,255,0.2) !important;
+                }
+
+                .custom-select-menu {
+                    position: absolute;
+                    top: calc(100% + 8px);
+                    left: 0;
+                    right: 0;
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                    padding: 8px;
+                    z-index: 1000;
+                    animation: dropdownFade 0.2s ease-out;
+                    max-height: 250px;
+                    overflow-y: auto;
+                }
+
+                @keyframes dropdownFade {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                .custom-select-item {
+                    padding: 10px 15px;
+                    border-radius: 8px;
+                    color: #1e293b;
+                    font-weight: 600;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+
+                .custom-select-item:hover {
+                    background: #f1f5f9;
+                    color: #3b82f6;
+                }
+
+                .custom-select-item.selected {
+                    background: #3b82f6;
+                    color: white;
+                }
+
                 .btn-gen { 
                     background: #3b82f6; 
                     color: white; 
@@ -430,6 +491,8 @@ const Timetable = () => {
                     box-shadow: 0 4px 25px rgba(0,0,0,0.02); 
                     border: 1px solid #eef2f6; 
                     animation: fadeIn 1s ease-out;
+                    z-index: 1;
+                    position: relative;
                 }
                 
                 .grid-table { 
