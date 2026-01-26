@@ -21,6 +21,8 @@ const data = [
     ["VI CSE", "EC2014", "Software Defined Networks -Open Elective - I*", "SD1", "", "SD2", "", "", 2, "ECE", "NO", 3, 1],
     ["VI CSE", "ME2011", "Renewable Energy Technologies -Open Elective - I*", "RET1", "", "RET2", "", "", 2, "MECH", "NO", 3, 1],
     ["VI CSE", "CS2V62", "Image Processing - Professional Elective - III", "DMDP", "VNK", "", "", "", 2, "CSE", "NO", 4, 1],
+    ["VI CSE", "ED2VA1", "Value added course - Entrepreneurship Development", "PAC", "NPP", "SGR", "RSA", "", 4, "CSE", "NO", 4, 0],
+    ["VI CSE", "IT3412", "IIT Spoken Tutorial class", "LA1", "LA2", "LA3", "LA4", "", 4, "IT", "NO", 0, 1],
 
     // Semester VI - Practicals (Explicitly using H-index column 7 for hours if needed by logic)
     ["VI CSE", "CS2611", "Cryptography and cyber security (Integrated Lab)", "MST", "GM", "VP", "ND", "", 4, "CSE", "NO", 2, 0],
