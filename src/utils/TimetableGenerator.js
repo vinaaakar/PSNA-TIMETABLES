@@ -28,7 +28,16 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
             const d = slot.d, s = slot.s, duration = slot.duration || 1;
             for (let k = 0; k < duration; k++) {
                 if (s + k < SLOTS && d < 6) {
-                    grid[d][s + k] = { ...sub, isFixedFromWord: true, isStart: k === 0, duration };
+                    const isIntegrated = String(sub.type || '').toUpperCase().includes('INTEGRATED') || String(sub.name || '').toUpperCase().includes('INTEGRATED');
+                    const isLab = duration > 1;
+                    grid[d][s + k] = {
+                        ...sub,
+                        isFixedFromWord: true,
+                        isStart: k === 0,
+                        duration,
+                        isLab: isLab, // Mark as lab if duration > 1
+                        displayCode: isLab ? sub.code + (k === 0 ? (isIntegrated ? ' (Int.)' : ' (Lab)') : '') : sub.code
+                    };
                     if (d === 5) sub.remSat--; else sub.remWk--;
                 }
             }
@@ -53,57 +62,79 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
     counts.filter(isBlockSubject).forEach(lab => {
         let attempt = 0;
         const isIntegrated = String(lab.type || '').toUpperCase().includes('INTEGRATED') || String(lab.name || '').toUpperCase().includes('INTEGRATED');
-        // Integrated subjects usually have 1 lab block and some theory sessions.
-        // We limit automatic block generation to ONE block for integrated subjects.
-        let blocksFound = 0;
-        const maxBlocks = isIntegrated ? 1 : 10;
 
-        while (lab.remWk >= 2 && attempt < 15 && blocksFound < maxBlocks) {
+        // Count blocks ALREADY present from Word locks (contiguous slots)
+        let blocksFound = 0;
+        for (let d = 0; d < 5; d++) {
+            let inBlock = false;
+            let blockLen = 0;
+            for (let s = 0; s < SLOTS; s++) {
+                if (grid[d][s] && (grid[d][s].code === lab.code || grid[d][s].subIdx === lab.subIdx)) {
+                    if (!inBlock) { inBlock = true; blockLen = 1; }
+                    else { blockLen++; }
+                } else {
+                    if (inBlock && blockLen >= 2) blocksFound++;
+                    inBlock = false; blockLen = 0;
+                }
+            }
+            if (inBlock && blockLen >= 2) blocksFound++;
+        }
+
+        // Integrated subjects usually have 1 lab block and some theory sessions.
+        // If credits are very high (e.g. >= 6), we might allow 2 blocks.
+        const maxBlocks = (isIntegrated && lab.remWk < 6) ? 1 : (isIntegrated ? 2 : 10);
+
+        while (lab.remWk >= 2 && attempt < 20 && blocksFound < maxBlocks) {
             attempt++;
             let duration = (lab.remWk >= 4) ? 4 : (lab.remWk >= 3 ? 3 : 2);
             let found = false;
 
-            // Prioritize days that don't already have this subject
-            const sortedDayOrder = [...dayOrder].sort((a, b) => {
-                const hasA = grid[a].some(c => c && c.code === lab.code);
-                const hasB = grid[b].some(c => c && c.code === lab.code);
-                return (hasA ? 1 : 0) - (hasB ? 1 : 0);
-            });
+            // Try twice: 1st time follow "one lab per day" rule, 2nd time relax it
+            const modes = [true, false];
+            for (const strictDay of modes) {
+                // Prioritize days that don't already have this subject
+                const sortedDayOrder = [...dayOrder].sort((a, b) => {
+                    const hasA = grid[a].some(c => c && c.code === lab.code);
+                    const hasB = grid[b].some(c => c && c.code === lab.code);
+                    return (hasA ? 1 : 0) - (hasB ? 1 : 0);
+                });
 
-            for (const d of sortedDayOrder) {
-                // Don't put two block subjects in the same day (soft rule, but let's keep it for labs)
-                if (grid[d].some(c => c && (c.isLab || isBlockSubject(c)))) continue;
-                if (globalLabUsage[`${d}-${lab.code}`]) continue;
-
-                let validStarts = (duration === 4) ? [1, 3] : (duration === 3 ? [1, 4] : [1, 2, 4]);
-
-                // Shuffle starts slightly to avoid all labs starting at P1
-                validStarts.sort(() => Math.random() - 0.5);
-
-                for (let s of validStarts) {
-                    if (s + duration > SLOTS) continue;
-                    const slotKey = `${d}-${s}`;
-                    if (reservedSlots[slotKey] && reservedSlots[slotKey].has('LAB_START')) continue;
-
-                    let free = true;
-                    for (let k = 0; k < duration; k++) if (grid[d][s + k]) free = false;
-
-                    if (free) {
-                        for (let k = 0; k < duration; k++) {
-                            const labelSuffix = isIntegrated ? ' (Int.)' : ' (Lab)';
-                            grid[d][s + k] = {
-                                ...lab,
-                                isStart: k === 0,
-                                duration,
-                                isLab: true,
-                                displayCode: lab.code + (k === 0 ? labelSuffix : '')
-                            };
-                        }
-                        lab.remWk -= duration;
-                        found = true;
-                        blocksFound++;
-                        break;
+                for (const d of sortedDayOrder) {
+                    // One lab per day rule (Relaxed: allow same subject, or different lab only in second pass)
+                    if (strictDay) {
+                        if (grid[d].some(c => c && c.code !== lab.code && (c.isLab || isBlockSubject(c)))) continue;
                     }
+                    if (globalLabUsage[`${d}-${lab.code}`]) continue;
+
+                    let validStarts = (duration === 4) ? [1, 3] : (duration === 3 ? [1, 4] : [1, 2, 4]);
+                    validStarts.sort(() => Math.random() - 0.5);
+
+                    for (let s of validStarts) {
+                        if (s + duration > SLOTS) continue;
+                        const slotKey = `${d}-${s}`;
+                        if (reservedSlots[slotKey] && reservedSlots[slotKey].has('LAB_START')) continue;
+
+                        let free = true;
+                        for (let k = 0; k < duration; k++) if (grid[d][s + k]) free = false;
+
+                        if (free) {
+                            for (let k = 0; k < duration; k++) {
+                                const labelSuffix = isIntegrated ? ' (Int.)' : ' (Lab)';
+                                grid[d][s + k] = {
+                                    ...lab,
+                                    isStart: k === 0,
+                                    duration,
+                                    isLab: true,
+                                    displayCode: lab.code + (k === 0 ? labelSuffix : '')
+                                };
+                            }
+                            lab.remWk -= duration;
+                            found = true;
+                            blocksFound++;
+                            break;
+                        }
+                    }
+                    if (found) break;
                 }
                 if (found) break;
             }
