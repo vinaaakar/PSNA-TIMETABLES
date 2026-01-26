@@ -554,7 +554,6 @@ const Timetable = () => {
                     </div>
                     <div className="header-text">
                         <h2>Smart Timetable</h2>
-                        <p>Click any cell to edit the schedule</p>
                     </div>
                 </div>
                 <div className="header-actions">
