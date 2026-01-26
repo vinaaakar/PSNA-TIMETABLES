@@ -80,30 +80,22 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
             if (inBlock && blockLen >= 2) blocksFound++;
         }
 
-        // Integrated subjects usually have 1 lab block and some theory sessions.
-        // If credits are very high (e.g. >= 6), we might allow 2 blocks.
-        const maxBlocks = (isIntegrated && lab.remWk < 6) ? 1 : (isIntegrated ? 2 : 10);
+        // For Integrated, we strictly want EXACTLY one lab block of 3 periods.
+        const maxBlocks = isIntegrated ? 1 : 10;
 
-        while (lab.remWk >= 2 && attempt < 20 && blocksFound < maxBlocks) {
+        while (lab.remWk >= 2 && blocksFound < maxBlocks && attempt < 25) {
             attempt++;
-            let duration = (lab.remWk >= 4) ? 4 : (lab.remWk >= 3 ? 3 : 2);
+            // For Integrated, force 3 periods if possible. 
+            let duration = isIntegrated ? 3 : (lab.remWk >= 4 ? 4 : (lab.remWk >= 3 ? 3 : 2));
+            if (duration > lab.remWk) duration = lab.remWk;
+            if (duration < 2) break;
+
             let found = false;
-
-            // Try twice: 1st time follow "one lab per day" rule, 2nd time relax it
-            const modes = [true, false];
-            for (const strictDay of modes) {
-                // Prioritize days that don't already have this subject
-                const sortedDayOrder = [...dayOrder].sort((a, b) => {
-                    const hasA = grid[a].some(c => c && c.code === lab.code);
-                    const hasB = grid[b].some(c => c && c.code === lab.code);
-                    return (hasA ? 1 : 0) - (hasB ? 1 : 0);
-                });
-
-                for (const d of sortedDayOrder) {
-                    // One lab per day rule (Relaxed: allow same subject, or different lab only in second pass)
-                    if (strictDay) {
-                        if (grid[d].some(c => c && c.code !== lab.code && (c.isLab || isBlockSubject(c)))) continue;
-                    }
+            // Pass 0: Try to find a day with NO other labs.
+            // Pass 1: Relaxed day (allow multiple labs per day if needed).
+            for (let pass = 0; pass < 2; pass++) {
+                for (const d of dayOrder) {
+                    if (pass === 0 && grid[d].some(c => c && (c.isLab || isBlockSubject(c)))) continue;
                     if (globalLabUsage[`${d}-${lab.code}`]) continue;
 
                     let validStarts = (duration === 4) ? [1, 3] : (duration === 3 ? [1, 4] : [1, 2, 4]);
@@ -111,26 +103,25 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
 
                     for (let s of validStarts) {
                         if (s + duration > SLOTS) continue;
-                        const slotKey = `${d}-${s}`;
-                        if (reservedSlots[slotKey] && reservedSlots[slotKey].has('LAB_START')) continue;
+                        if (reservedSlots[`${d}-${s}`] && reservedSlots[`${d}-${s}`].has('LAB_START')) continue;
 
                         let free = true;
                         for (let k = 0; k < duration; k++) if (grid[d][s + k]) free = false;
 
                         if (free) {
                             for (let k = 0; k < duration; k++) {
-                                const labelSuffix = isIntegrated ? ' (Int.)' : ' (Lab)';
+                                const suffix = isIntegrated ? ' (Int.)' : ' (Lab)';
                                 grid[d][s + k] = {
                                     ...lab,
                                     isStart: k === 0,
                                     duration,
                                     isLab: true,
-                                    displayCode: lab.code + (k === 0 ? labelSuffix : '')
+                                    displayCode: lab.code + (k === 0 ? suffix : '')
                                 };
                             }
                             lab.remWk -= duration;
-                            found = true;
                             blocksFound++;
+                            found = true;
                             break;
                         }
                     }
@@ -138,8 +129,8 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
                 }
                 if (found) break;
             }
-            if (!found) duration--; // Try smaller block
-            if (duration < 2) break;
+            if (!found && isIntegrated) break; // Fall to theory if no block found
+            if (!found) attempt += 5;
         }
 
         // SATURDAY LAB
