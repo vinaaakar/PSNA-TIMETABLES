@@ -177,9 +177,10 @@ const WordPreview = () => {
                             let m;
                             while ((m = codeRegex.exec(cellText)) !== null) {
                                 const code = m[1].toUpperCase();
-                                const textAfter = cellText.substring(m.index + code.length, m.index + code.length + 5);
-                                const localSecMatch = textAfter.match(/[-:\s\(]*([A-H])\b/i);
-                                const sec = localSecMatch ? localSecMatch[1].toUpperCase() : activeSection;
+                                const textAfter = cellText.substring(m.index + code.length, m.index + code.length + 10);
+                                // Stricter section match: Only if explicitly labeled like (A) or Sec: A
+                                const localSecMatch = textAfter.match(/(?:\((?:SEC\s*)?([A-H])\))|(?:\bSEC[:\s-]+([A-H])\b)/i);
+                                const sec = (localSecMatch ? (localSecMatch[1] || localSecMatch[2]) : activeSection)?.toUpperCase();
                                 if (sec) {
                                     found.push({ code, sec, d: dayIdx, s: slot, text: cellText.trim() });
                                 }

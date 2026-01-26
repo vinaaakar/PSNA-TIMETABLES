@@ -52,90 +52,79 @@ export const generateClassTimetable = (semester, section, rawSubjects, reservedS
     dayOrder.push(preferredFreeDay);
     counts.filter(isBlockSubject).forEach(lab => {
         let attempt = 0;
-        while (lab.remWk >= 2 && attempt < 10) {
+        const isIntegrated = String(lab.type || '').toUpperCase().includes('INTEGRATED') || String(lab.name || '').toUpperCase().includes('INTEGRATED');
+        // Integrated subjects usually have 1 lab block and some theory sessions.
+        // We limit automatic block generation to ONE block for integrated subjects.
+        let blocksFound = 0;
+        const maxBlocks = isIntegrated ? 1 : 10;
+
+        while (lab.remWk >= 2 && attempt < 15 && blocksFound < maxBlocks) {
             attempt++;
             let duration = (lab.remWk >= 4) ? 4 : (lab.remWk >= 3 ? 3 : 2);
             let found = false;
-            for (const d of dayOrder) {
-                if (grid[d].some(c => c && isBlockSubject(c))) continue;
+
+            // Prioritize days that don't already have this subject
+            const sortedDayOrder = [...dayOrder].sort((a, b) => {
+                const hasA = grid[a].some(c => c && c.code === lab.code);
+                const hasB = grid[b].some(c => c && c.code === lab.code);
+                return (hasA ? 1 : 0) - (hasB ? 1 : 0);
+            });
+
+            for (const d of sortedDayOrder) {
+                // Don't put two block subjects in the same day (soft rule, but let's keep it for labs)
+                if (grid[d].some(c => c && (c.isLab || isBlockSubject(c)))) continue;
                 if (globalLabUsage[`${d}-${lab.code}`]) continue;
+
                 let validStarts = (duration === 4) ? [1, 3] : (duration === 3 ? [1, 4] : [1, 2, 4]);
-                validStarts.sort((a, b) => {
-                    const countA = grid.filter(row => row[a] && row[a].isStart && (row[a].isLab || isBlockSubject(row[a]))).length;
-                    const countB = grid.filter(row => row[b] && row[b].isStart && (row[b].isLab || isBlockSubject(row[b]))).length;
-                    return countA - countB;
-                });
+
+                // Shuffle starts slightly to avoid all labs starting at P1
+                validStarts.sort(() => Math.random() - 0.5);
+
                 for (let s of validStarts) {
                     if (s + duration > SLOTS) continue;
                     const slotKey = `${d}-${s}`;
                     if (reservedSlots[slotKey] && reservedSlots[slotKey].has('LAB_START')) continue;
+
                     let free = true;
                     for (let k = 0; k < duration; k++) if (grid[d][s + k]) free = false;
+
                     if (free) {
                         for (let k = 0; k < duration; k++) {
-                            const labelSuffix = lab.type.includes('INTEGRATED') ? ' (Int.)' : ' (Lab)';
-                            grid[d][s + k] = { ...lab, isStart: k === 0, duration, isLab: true, displayCode: lab.code + (k === 0 ? labelSuffix : '') };
+                            const labelSuffix = isIntegrated ? ' (Int.)' : ' (Lab)';
+                            grid[d][s + k] = {
+                                ...lab,
+                                isStart: k === 0,
+                                duration,
+                                isLab: true,
+                                displayCode: lab.code + (k === 0 ? labelSuffix : '')
+                            };
                         }
                         lab.remWk -= duration;
-                        found = true; break;
+                        found = true;
+                        blocksFound++;
+                        break;
                     }
                 }
                 if (found) break;
             }
-            if (!found) {
-                for (const d of dayOrder) {
-                    if (grid[d].some(c => c && isBlockSubject(c))) continue;
-                    if (globalLabUsage[`${d}-${lab.code}`]) continue;
-                    let validStarts = (duration === 4) ? [1, 3] : (duration === 3 ? [1, 4] : [1, 2, 4]);
-                    validStarts.sort((a, b) => {
-                        const countA = grid.filter(row => row[a] && row[a].isStart && (row[a].isLab || isBlockSubject(row[a]))).length;
-                        const countB = grid.filter(row => row[b] && row[b].isStart && (row[b].isLab || isBlockSubject(row[b]))).length;
-                        return countA - countB;
-                    });
-                    for (let s of validStarts) {
-                        if (s + duration > SLOTS) continue;
-                        let free = true;
-                        for (let k = 0; k < duration; k++) if (grid[d][s + k]) free = false;
-                        if (free) {
-                            for (let k = 0; k < duration; k++) {
-                                const labelSuffix = lab.type.includes('INTEGRATED') ? ' (Int.)' : ' (Lab)';
-                                grid[d][s + k] = { ...lab, isStart: k === 0, duration, isLab: true, displayCode: lab.code + (k === 0 ? labelSuffix : '') };
-                            }
-                            lab.remWk -= duration;
-                            found = true; break;
-                        }
-                    }
-                    if (found) break;
-                }
-            }
-            if (!found) break;
+            if (!found) duration--; // Try smaller block
+            if (duration < 2) break;
         }
+
+        // SATURDAY LAB
         if (lab.remSat >= 2 && !grid[5].some(c => c && isBlockSubject(c))) {
             const d = 5;
-            let duration = (lab.remSat >= 4) ? 4 : (lab.remSat >= 3 ? 3 : 2);
-            let validStarts = (duration === 4) ? [1, 3] : (duration === 3 ? [1, 4] : [1, 2, 4]);
+            let duration = Math.min(lab.remSat, 4);
+            let validStarts = [1, 2, 3];
             let foundSat = false;
             for (let s of validStarts) {
                 if (s + duration > SLOTS) continue;
-                if (reservedSlots[`5-${s}`] && reservedSlots[`5-${s}`].has('LAB_START')) continue;
                 let free = true;
                 for (let k = 0; k < duration; k++) if (grid[d][s + k]) free = false;
                 if (free) {
                     for (let k = 0; k < duration; k++) grid[d][s + k] = { ...lab, isStart: k === 0, duration, isLab: true };
                     lab.remSat -= duration;
                     foundSat = true; break;
-                }
-            }
-            if (!foundSat) {
-                for (let s of validStarts) {
-                    if (s + duration > SLOTS) continue;
-                    let free = true;
-                    for (let k = 0; k < duration; k++) if (grid[d][s + k]) free = false;
-                    if (free) {
-                        for (let k = 0; k < duration; k++) grid[d][s + k] = { ...lab, isStart: k === 0, duration, isLab: true };
-                        lab.remSat -= duration;
-                        break;
-                    }
                 }
             }
         }
