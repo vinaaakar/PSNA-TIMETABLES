@@ -58,14 +58,19 @@ const Teachers = () => {
                 </div>
             </div>
             <div className="card" style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ position: 'relative', width: '300px' }}>
-                        <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                        <input className="input-field" style={{ width: '100%', paddingLeft: 40 }} placeholder="Search faculty..." value={search} onChange={e => setSearch(e.target.value)} />
+                <div className="filter-bar">
+                    <div className="search-wrapper">
+                        <Search size={18} />
+                        <input
+                            className="elegant-input"
+                            placeholder="Search faculty by name or subject..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <div className="filter-group">
                         <Filter size={18} color="#94a3b8" />
-                        <select className="form-select" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
+                        <select className="elegant-select" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
                             <option value="All">All Semesters</option>
                             {uniqueSems.map(s => <option key={s} value={s}>Sem {s}</option>)}
                         </select>

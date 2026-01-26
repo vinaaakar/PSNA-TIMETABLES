@@ -161,6 +161,100 @@ button {
     appearance: none;
 }
 
+/* Filter Bar Design System */
+.filter-bar {
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-wrapper svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    transition: color 0.3s;
+}
+
+.search-wrapper:focus-within svg {
+    color: var(--primary);
+}
+
+.elegant-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border-radius: 14px;
+    border: 1.5px solid #f1f5f9;
+    background: #f8fafc;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.elegant-input:hover {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.elegant-input:focus {
+    background: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+    transform: scale(1.01);
+}
+
+.filter-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.elegant-select-wrapper {
+    position: relative;
+}
+
+.elegant-select {
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1.5px solid #f1f5f9;
+    background: #f8fafc;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s;
+    appearance: none;
+    min-width: 150px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.9rem;
+}
+
+.elegant-select:hover {
+    border-color: var(--primary-light);
+    background-color: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+.elegant-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+}
+
 .table-container {
     background: var(--bg-surface);
     border-radius: var(--radius-lg);

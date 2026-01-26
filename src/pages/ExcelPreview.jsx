@@ -268,5 +268,4 @@ const ExcelPreview = () => {
         </div>
     );
 };
-
 export default ExcelPreview;

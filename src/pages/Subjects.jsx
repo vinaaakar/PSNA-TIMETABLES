@@ -49,19 +49,24 @@ const Subjects = () => {
                 </div>
             </div>
             <div className="card" style={{ padding: '0' }}>
-                <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ position: 'relative', width: '300px' }}>
-                        <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                        <input className="input-field" style={{ width: '100%', paddingLeft: 40 }} placeholder="Search subjects..." value={search} onChange={e => setSearch(e.target.value)} />
+                <div className="filter-bar">
+                    <div className="search-wrapper">
+                        <Search size={18} />
+                        <input
+                            className="elegant-input"
+                            placeholder="Search subjects by name or code..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <div className="filter-group">
                         <Filter size={18} color="#94a3b8" />
-                        <select className="form-select" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
+                        <select className="elegant-select" value={filterSem} onChange={e => setFilterSem(e.target.value)}>
                             <option value="All">All Semesters</option>
                             {uniqueSems.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <select className="form-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
-                            <option value="All">Type</option>
+                        <select className="elegant-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+                            <option value="All">All Types</option>
                             <option value="Lecture">Lecture</option>
                             <option value="Lab">Lab</option>
                             <option value="Elective">Elective</option>
