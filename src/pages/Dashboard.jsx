@@ -14,19 +14,16 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
 );
 const Dashboard = () => {
     const { teachers, subjects, clearTeachers, clearSubjects, clearFacultyAccounts, clearPreemptiveConstraints, updateSchedule } = useData();
-
     const handleResetAll = () => {
         if (window.confirm('CRITICAL: This will delete ALL imported Excel and Word data. Are you sure?')) {
             clearTeachers();
             clearSubjects();
             clearFacultyAccounts();
             clearPreemptiveConstraints();
-            // Clear all semesters in schedule
             localStorage.removeItem('timetable_schedule');
             window.location.reload();
         }
     };
-
     const teacherCount = new Set(teachers.map(t => t.name)).size;
     const subjectCount = subjects.length;
     return (
