@@ -189,6 +189,18 @@ const Timetable = () => {
 
     const [editingCell, setEditingCell] = useState(null);
     const [editValue, setEditValue] = useState('');
+    const [isSemDropdownOpen, setIsSemDropdownOpen] = useState(false);
+    const dropdownRef = React.useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsSemDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleCellClick = (dIdx, sIdx, cell) => {
         setEditingCell({ day: dIdx, slot: sIdx, section: selectedSectionView, cell });
@@ -259,36 +271,79 @@ const Timetable = () => {
                 
                 .header-actions { display: flex; align-items: center; gap: 0.75rem; }
                 
-                .sem-select-container { 
-                    background: rgba(255,255,255,0.08); 
-                    border: 1px solid rgba(255,255,255,0.12); 
-                    border-radius: 10px; 
-                    padding: 0.5rem 0.8rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    transition: all 0.2s;
+                /* Elegant Dropdown */
+                .custom-dropdown {
+                    position: relative;
+                    z-index: 100;
                 }
 
-                .sem-select-container:focus-within {
-                    background: rgba(255,255,255,0.15);
-                    border-color: var(--primary-light);
-                }
-                
-                .sem-select { 
-                    background: transparent; 
-                    border: none;
-                    color: white; 
-                    font-weight: 800; 
-                    font-size: 0.75rem; 
-                    outline: none; 
+                .dropdown-trigger {
+                    background: rgba(255,255,255,0.1); 
+                    border: 1px solid rgba(255,255,255,0.1); 
+                    border-radius: 12px; 
+                    padding: 0.6rem 1rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
                     cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    min-width: 140px;
+                }
+
+                .dropdown-trigger:hover {
+                    background: rgba(255,255,255,0.15);
+                    transform: translateY(-1px);
+                    border-color: rgba(255,255,255,0.3);
+                }
+
+                .dropdown-trigger span {
+                    font-weight: 800;
+                    font-size: 0.85rem;
+                    letter-spacing: 0.02em;
                     text-transform: uppercase;
                 }
 
-                .sem-select option {
-                    color: #0f172a;
+                .dropdown-menu {
+                    position: absolute;
+                    top: calc(100% + 8px);
+                    left: 0;
+                    right: 0;
                     background: white;
+                    border-radius: 16px;
+                    padding: 8px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                    border: 1px solid #eef2f6;
+                    animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                @keyframes slideDownFade {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                .dropdown-item {
+                    padding: 0.75rem 1rem;
+                    border-radius: 10px;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    color: #475569;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                }
+
+                .dropdown-item:hover {
+                    background: #f1f5f9;
+                    color: #4f46e5;
+                    transform: translateX(4px);
+                }
+
+                .dropdown-item.active {
+                    background: #eff6ff;
+                    color: #2563eb;
                 }
 
                 .btn-gen { 
@@ -557,12 +612,30 @@ const Timetable = () => {
                     </div>
                 </div>
                 <div className="header-actions">
-                    <div className="sem-select-container">
-                        <Calendar size={16} color="rgba(255,255,255,0.5)" />
-                        <select className="sem-select" value={semester} onChange={(e) => setSemester(e.target.value)}>
-                            {availableSemesters.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                    <div className="custom-dropdown" ref={dropdownRef}>
+                        <div className="dropdown-trigger" onClick={() => setIsSemDropdownOpen(!isSemDropdownOpen)}>
+                            <Calendar size={18} color="rgba(255,255,255,0.7)" />
+                            <span>{semester || 'Select Sem'}</span>
+                            <Layers size={14} style={{ opacity: 0.5, transform: isSemDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
+                        </div>
+                        {isSemDropdownOpen && (
+                            <div className="dropdown-menu">
+                                {availableSemesters.map(s => (
+                                    <div
+                                        key={s}
+                                        className={`dropdown-item ${semester === s ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setSemester(s);
+                                            setIsSemDropdownOpen(false);
+                                        }}
+                                    >
+                                        {s}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
+
                     <button className="btn-gen" onClick={handleGenerate} disabled={isGenerating}>
                         <Play size={16} fill="white" /> {isGenerating ? 'GENERATING...' : 'Generate Schedule'}
                     </button>
