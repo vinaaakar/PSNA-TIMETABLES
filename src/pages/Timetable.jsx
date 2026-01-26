@@ -228,6 +228,59 @@ const Timetable = () => {
         setEditingCell(null);
     };
 
+    const handleExportExcel = () => {
+        if (!grids[selectedSectionView]) return;
+        const currentGrid = grids[selectedSectionView];
+        const rows = [
+            ['PSNA COLLEGE OF ENGINEERING AND TECHNOLOGY'],
+            ['DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING'],
+            [`CLASS TIME TABLE - SEMESTER ${semester} - SECTION ${selectedSectionView}`],
+            [''],
+            ['DAY', 'P1', 'P2', 'BRK', 'P3', 'P4', 'LUN', 'P5', 'P6', 'P7']
+        ];
+        DAYS.forEach((day, dIdx) => {
+            const row = [day];
+            currentGrid[dIdx].forEach((cell, sIdx) => {
+                row.push(cell ? `${cell.code} (${cell.teacherName})` : '');
+                if (sIdx === 1) row.push('BREAK');
+                if (sIdx === 3) row.push('LUNCH');
+            });
+            rows.push(row);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Timetable");
+        XLSX.writeFile(wb, `Timetable_${semester}_${selectedSectionView}.xlsx`);
+    };
+
+    const handleExportWord = () => {
+        // We can use the existing print-preview HTML content for Word
+        const printContent = document.querySelector('.print-container');
+        if (!printContent) return;
+
+        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+            "xmlns:w='urn:schemas-microsoft-com:office:word' " +
+            "xmlns='http://www.w3.org/TR/REC-html40'>" +
+            "<head><meta charset='utf-8'><style>" +
+            "table { border-collapse: collapse; width: 100%; } " +
+            "th, td { border: 1px solid black; padding: 5px; text-align: center; } " +
+            ".print-header { text-align: center; border-bottom: 2px solid black; } " +
+            "</style></head><body>";
+        const footer = "</body></html>";
+        const html = header + printContent.innerHTML + footer;
+
+        const blob = new Blob(['\ufeff', html], {
+            type: 'application/msword'
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Timetable_${semester}_${selectedSectionView}.doc`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="timetable-page">
             <style>{`
@@ -589,8 +642,8 @@ const Timetable = () => {
                     <button className="btn-gen" onClick={handleGenerate} disabled={isGenerating}>
                         <Play size={16} fill="white" /> {isGenerating ? 'GENERATING...' : 'Generate Schedule'}
                     </button>
-                    <button className="icon-btn"><Download size={20} /></button>
-                    <button className="icon-btn"><FileSpreadsheet size={20} /></button>
+                    <button className="icon-btn" title="Download Word" onClick={handleExportWord}><Download size={20} /></button>
+                    <button className="icon-btn" title="Download Excel" onClick={handleExportExcel}><FileSpreadsheet size={20} /></button>
                     <button className="btn-print" onClick={() => window.print()}><Printer size={18} /> Print Official</button>
                 </div>
             </div>

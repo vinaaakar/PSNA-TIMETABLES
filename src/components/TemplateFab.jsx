@@ -25,7 +25,7 @@ const TemplateFab = () => {
                 visibility: isOpen ? 'visible' : 'hidden'
             }}>
                 <button
-                    onClick={() => downloadFile('/sample_timetable_data.xlsx', 'Template_Excel.xlsx')}
+                    onClick={() => downloadFile('sample_timetable_data.xlsx', 'Template_Excel.xlsx')}
                     className="btn-template"
                     style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
@@ -48,7 +48,7 @@ const TemplateFab = () => {
                     <FileSpreadsheet size={18} /> Excel Template
                 </button>
                 <button
-                    onClick={() => downloadFile('/Lab_Timetable_Template.doc', 'Lab_Timetable_Template.doc')}
+                    onClick={() => downloadFile('Lab_Timetable_Template.doc', 'Lab_Timetable_Template.doc')}
                     className="btn-template"
                     style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
