@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import mammoth from 'mammoth';
+import * as mammoth from 'mammoth';
 import { Upload, Save, FileText, AlertCircle, RefreshCw, Lock, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './ExcelPreview.css';
