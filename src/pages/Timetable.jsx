@@ -247,9 +247,28 @@ const Timetable = () => {
                     color: white; 
                     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
                     animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                    position: relative;
+                    overflow: hidden;
+                    z-index: 1;
+                }
+
+                .header-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 0;
+                    height: 100%;
+                    background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05));
+                    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                    z-index: -1;
+                }
+
+                .header-card:hover::before {
+                    width: 100%;
                 }
                 
-                .header-info { display: flex; align-items: center; gap: 1.25rem; }
+                .header-info { display: flex; align-items: center; gap: 1.25rem; z-index: 2; }
                 
                 .header-icon { 
                     background: linear-gradient(135deg, #4f46e5, #8b5cf6); 
@@ -260,6 +279,7 @@ const Timetable = () => {
                     justify-content: center; 
                     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); 
                     transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    z-index: 2;
                 }
 
                 .header-card:hover .header-icon {
@@ -269,7 +289,7 @@ const Timetable = () => {
                 .header-text h2 { margin: 0; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.01em; }
                 .header-text p { margin: 2px 0 0; font-size: 0.75rem; opacity: 0.6; font-weight: 500; }
                 
-                .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+                .header-actions { display: flex; align-items: center; gap: 0.75rem; z-index: 2; }
                 
                 /* Elegant Dropdown */
                 .custom-dropdown {
