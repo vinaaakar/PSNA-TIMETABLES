@@ -13,11 +13,26 @@ export const DataProvider = ({ children }) => {
             return fallback;
         }
     };
-    const [teachers, setTeachers] = useState(safeParse('timetable_teachers', []));
-    const [subjects, setSubjects] = useState(safeParse('timetable_subjects', []));
-    const [schedule, setSchedule] = useState(safeParse('timetable_schedule', {}));
-    const [facultyAccounts, setFacultyAccounts] = useState(safeParse('timetable_faculty_accounts', []));
-    const [preemptiveConstraints, setPreemptiveConstraints] = useState(safeParse('timetable_preemptive_constraints', {}));
+    const [teachers, setTeachers] = useState(() => {
+        const val = safeParse('timetable_teachers', []);
+        return Array.isArray(val) ? val : [];
+    });
+    const [subjects, setSubjects] = useState(() => {
+        const val = safeParse('timetable_subjects', []);
+        return Array.isArray(val) ? val : [];
+    });
+    const [schedule, setSchedule] = useState(() => {
+        const val = safeParse('timetable_schedule', {});
+        return (val && typeof val === 'object' && !Array.isArray(val)) ? val : {};
+    });
+    const [facultyAccounts, setFacultyAccounts] = useState(() => {
+        const val = safeParse('timetable_faculty_accounts', []);
+        return Array.isArray(val) ? val : [];
+    });
+    const [preemptiveConstraints, setPreemptiveConstraints] = useState(() => {
+        const val = safeParse('timetable_preemptive_constraints', {});
+        return (val && typeof val === 'object' && !Array.isArray(val)) ? val : {};
+    });
     const [department, setDepartment] = useState(localStorage.getItem('timetable_department') || 'General');
     useEffect(() => {
         localStorage.setItem('timetable_department', department);

@@ -28,10 +28,11 @@ const Timetable = () => {
     const availableSemesters = Array.from(new Set(subjects.map(s => s.semester))).filter(Boolean).sort();
 
     useEffect(() => {
-        if (availableSemesters.length > 0 && (!semester || !availableSemesters.includes(semester))) {
-            setSemester(availableSemesters[0]);
+        const semesterList = Array.from(new Set(subjects.map(s => s.semester))).filter(Boolean).sort();
+        if (semesterList.length > 0 && (!semester || !semesterList.includes(semester))) {
+            setSemester(semesterList[0]);
         }
-    }, [availableSemesters, semester]);
+    }, [subjects, semester]);
 
     useEffect(() => {
         if (schedule && schedule[semester] && Object.keys(schedule[semester]).length > 0) {
